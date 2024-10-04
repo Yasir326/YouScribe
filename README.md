@@ -92,10 +92,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👏 Acknowledgements
 
-- [Gin Web Framework](https://github.com/gin-gonic/gin)
-- [MongoDB Go Driver](https://github.com/mongodb/mongo-go-driver)
-- [Kinde](https://kinde.com/)
-- [Stripe](https://stripe.com/)
 
 ## 📞 Contact
 
