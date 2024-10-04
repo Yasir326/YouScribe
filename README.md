@@ -1,36 +1,106 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Youscribe 📺✍️
 
-## Getting Started
+<!-- <p align="center">
+  <img src="assets/youscribe-logo.png" alt="Youscribe Logo" width="200"/>
+</p> -->
 
-First, run the development server:
+Youscribe is a powerful tool that transforms YouTube videos into actionable insights and comprehensive summaries. Whether you're a busy professional, a student, or just someone who loves to learn efficiently, Youscribe is your go-to solution for extracting valuable information from video content.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 🚀 Features
+
+- **Video Summarization**: Get concise summaries of YouTube videos.
+- **Action Steps**: For educational or business-related content, receive actionable steps to implement the advice.
+- **Comprehensive Summaries**: For other types of content, get detailed summaries that capture the essence of the video.
+- **User-Friendly Interface**: Easy-to-use web application for seamless interaction.
+- **Secure Authentication**: Powered by Kinde for robust and secure user management.
+- **Flexible Pricing**: Various subscription plans to suit different needs, with secure payment processing via Stripe.
+
+## 🛠️ Tech Stack
+
+- **Backend**: Go (Gin framework)
+- **Database**: MongoDB
+- **Authentication**: Kinde SSO
+- **Payment Processing**: Stripe
+- **Frontend**: [Your frontend technology, e.g., React, Vue.js]
+
+## 🏗️ Architecture
+
+Youscribe follows a microservices architecture:
+
+- **Auth Service**: Handles user registration, login, and token management.
+- **Transcript Service**: Fetches and processes YouTube video transcripts.
+- **Summary Service**: Generates summaries and action steps from transcripts.
+- **Payment Service**: Manages subscriptions and processes payments.
+
+## 🚦 Getting Started
+
+### Prerequisites
+
+- Go 1.16+
+- MongoDB
+- Node.js and npm (for frontend)
+- Kinde account
+- Stripe account
+
+### Installation
+
+1. Clone the repository:
+   ```
+   git clone https://github.com/yourusername/youscribe.git
+   ```
+
+2. Navigate to the project directory:
+   ```
+   cd youscribe
+   ```
+
+3. Install backend dependencies:
+   ```
+   go mod tidy
+   ```
+
+4. Set up environment variables:
+   - Copy `.env.example` to `.env`
+   - Fill in the required values in `.env`
+
+5. Start the backend server:
+   ```
+   go run cmd/server/main.go
+   ```
+
+6. [Add steps for setting up and running the frontend]
+
+## 🧪 Running Tests
+
+To run the test suite:
+
+```
+go test ./...
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 📚 API Documentation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+[Link to your API documentation, or include basic endpoint information here]
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🤝 Contributing
 
-## Learn More
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for more details.
 
-To learn more about Next.js, take a look at the following resources:
+## 📄 License
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 👏 Acknowledgements
 
-## Deploy on Vercel
+- [Gin Web Framework](https://github.com/gin-gonic/gin)
+- [MongoDB Go Driver](https://github.com/mongodb/mongo-go-driver)
+- [Kinde](https://kinde.com/)
+- [Stripe](https://stripe.com/)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📞 Contact
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+For any queries or support, please contact us at [yasirk2190@gmail.com](mailto:yasirk2190@gmail.com).
+
+---
+
+Made with ❤️ by [Yasir]
