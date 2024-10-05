@@ -5,7 +5,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/hooks/use-toast'
 
-export function YoutubeForm({ onSummaryGenerated }: { onSummaryGenerated: (summary: unknown) => void }) {
+type Summary = {
+  id: string
+  content: string
+}
+
+export function YoutubeForm({ onSummaryGenerated }: { onSummaryGenerated: (summary: Summary) => void }) {
   const [url, setUrl] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
@@ -27,10 +32,7 @@ export function YoutubeForm({ onSummaryGenerated }: { onSummaryGenerated: (summa
       }
 
       const data = await response.json()
-      onSummaryGenerated({
-        id: Date.now().toString(), // Generate a unique ID for the summary
-        ...data.summary,
-      })
+      onSummaryGenerated(data.summary)
     } catch (error) {
       console.error('Error:', error)
       toast({

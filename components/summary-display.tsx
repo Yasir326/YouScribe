@@ -1,15 +1,18 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client'
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Download, ThumbsUp } from 'lucide-react'
+import { Download, ThumbsUp, Copy } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import React from 'react'
 
 type Summary = {
   id: string
   content: string
-  actionSteps: string[]
 }
 
 export function SummaryDisplay({ summary }: { summary: Summary | null }) {
@@ -21,7 +24,7 @@ export function SummaryDisplay({ summary }: { summary: Summary | null }) {
     if (summary) {
       fetchLikeCount()
     }
-  },)
+  }, [summary])
 
   const fetchLikeCount = async () => {
     if (!summary) return
@@ -76,18 +79,30 @@ export function SummaryDisplay({ summary }: { summary: Summary | null }) {
     }
   }
 
+  const handleCopy = async () => {
+    if (!summary) return
+
+    try {
+      await navigator.clipboard.writeText(summary.content)
+      toast({
+        title: 'Success',
+        description: 'Summary copied to clipboard!',
+        variant: 'default',
+      })
+    } catch (error) {
+      console.error('Error copying to clipboard:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to copy summary',
+        variant: 'destructive',
+      })
+    }
+  }
+
   const handleDownload = () => {
     if (!summary) return
 
-    const content = `
-Summary:
-${summary.content}
-
-Action Steps:
-${summary.actionSteps.map((step, index) => `${index + 1}. ${step}`).join('\n')}
-    `.trim()
-
-    const blob = new Blob([content], { type: 'text/plain' })
+    const blob = new Blob([summary.content], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -101,19 +116,21 @@ ${summary.actionSteps.map((step, index) => `${index + 1}. ${step}`).join('\n')}
   if (!summary) {
     return (
       <div className="text-center mt-8">
-        <p>Enter a YouTube URL to generate a summary.</p>
+        <p>No summary available. Please try generating a summary first.</p>
       </div>
     )
   }
 
   return (
-    <Card className="mt-8">
+    <Card className="mt-8 bg-background text-foreground">
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
-          Summary
           <div className="space-x-2">
             <Button variant="outline" size="icon" onClick={handleDownload}>
               <Download className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={handleCopy}>
+              <Copy className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
@@ -128,14 +145,25 @@ ${summary.actionSteps.map((step, index) => `${index + 1}. ${step}`).join('\n')}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <h3 className="font-semibold mb-2">Content Summary:</h3>
-        <p>{summary.content}</p>
-        <h3 className="font-semibold mt-4 mb-2">Action Steps:</h3>
-        <ul className="list-disc pl-5">
-          {summary.actionSteps.map((step, index) => (
-            <li key={index}>{step}</li>
-          ))}
-        </ul>
+        <ReactMarkdown 
+          remarkPlugins={[remarkGfm]}
+          components={{
+            h2: ({...props}) => <h2 className="text-2xl font-bold mt-6 mb-4 text-foreground" {...props} />,
+            p: ({...props}) => <p className="mb-4 text-foreground" {...props} />,
+            ol: ({...props}) => <ol className="list-none pl-0 mb-4 text-foreground" {...props} />,
+            li: ({children, ...props}) => {
+              const [number, ...rest] = React.Children.toArray(children);
+              return (
+                <li className="mb-2 text-foreground" {...props}>
+                  <strong>{number} </strong>
+                  {rest}
+                </li>
+              );
+            },
+          }}
+        >
+          {summary.content}
+        </ReactMarkdown>
       </CardContent>
     </Card>
   )

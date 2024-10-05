@@ -99,4 +99,4 @@ For any queries or support, please contact us at [yasirk2190@gmail.com](mailto:y
 
 ---
 
-Made with ❤️ by [Yasir]
+Made with ❤️ by [Yasir](https://www.linkedin.com/in/yasir-khan-64547465/)

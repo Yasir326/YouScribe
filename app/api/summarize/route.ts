@@ -26,7 +26,14 @@ export async function POST(req: Request) {
     }
 
     // Generate summary using OpenAI
-    const summary = await generateSummary(transcript)
+    const content = await generateSummary(transcript)
+
+    const summary = {
+      id: videoId, // Using videoId as a unique identifier
+      content: content
+    }
+
+    console.log('Generated summary:', summary); // Add this line for debugging
 
     return NextResponse.json({ summary })
   } catch (error) {
@@ -62,29 +69,30 @@ async function getTranscript(videoId: string): Promise<string> {
 }
 
 // The generateSummary function remains the same
-async function generateSummary(transcript: string): Promise<{ content: string; actionSteps: string[] }> {
+async function generateSummary(transcript: string): Promise<string> {
   const response = await openai.chat.completions.create({
     model: 'gpt-3.5-turbo',
     messages: [
-      { role: 'system', content: 'You are a helpful assistant that summarizes YouTube video transcripts and provides actionable steps.' },
-      { role: 'user', content: `Summarize the following transcript and provide 3-5 actionable steps:\n\n${transcript}` },
+      { role: 'system', content: 'You are a helpful assistant that summarizes YouTube video transcripts and provides actionable steps if applicable. Format your response in markdown with specific headers and numbering.' },
+      { role: 'user', content: `Summarize the following transcript and provide actionable steps if applicable. Use the following markdown format:
+
+## Summary:
+
+[Your summary content here]
+
+## Action Steps:
+
+1. [First action step]
+2. [Second action step]
+3. [Third action step]
+...
+
+Transcript:
+${transcript}` },
     ],
   })
 
   const summary = response.choices[0].message?.content || ''
-  console.log('summary', summary)
-
-  // Check if 'Actionable Steps:' is present in the summary
-  if (summary.includes('Actionable Steps:')) {
-    const [content, actionStepsRaw] = summary.split('Actionable Steps:')
-    const actionSteps = actionStepsRaw
-      .split('\n')
-      .filter(step => step.trim().length > 0)
-      .map(step => step.replace(/^\d+\.\s*/, '').trim())
-
-    return { content: content.trim(), actionSteps }
-  } else {
-    // If 'Actionable Steps:' is not present, return the whole summary as content and an empty array for actionSteps
-    return { content: summary.trim(), actionSteps: [] }
-  }
+  console.log('Generated summary:', summary);
+  return summary;
 }
