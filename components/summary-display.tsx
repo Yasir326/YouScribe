@@ -149,13 +149,13 @@ export function SummaryDisplay({ summary }: { summary: Summary | null }) {
           remarkPlugins={[remarkGfm]}
           components={{
             h2: ({...props}) => <h2 className="text-2xl font-bold mt-6 mb-4 text-foreground" {...props} />,
-            p: ({...props}) => <p className="mb-4 text-foreground" {...props} />,
+            p: ({...props}) => <p  className="mb-4 text-foreground" {...props} />,
             ol: ({...props}) => <ol className="list-none pl-0 mb-4 text-foreground" {...props} />,
             li: ({children, ...props}) => {
               const [number, ...rest] = React.Children.toArray(children);
               return (
                 <li className="mb-2 text-foreground" {...props}>
-                  <strong>{number} </strong>
+                  <>{number} </>
                   {rest}
                 </li>
               );

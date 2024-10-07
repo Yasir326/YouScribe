@@ -1,57 +1,67 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextResponse } from 'next/server'
-import OpenAI from 'openai'
+import { NextResponse } from 'next/server';
+import OpenAI from 'openai';
 import { YoutubeTranscript } from 'youtube-transcript';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-})
+});
 
 export async function POST(req: Request) {
   try {
-    const { url } = await req.json()
+    const { url } = await req.json();
 
     // Extract video ID from URL
-    const videoId = extractVideoId(url)
+    const videoId = extractVideoId(url);
     if (!videoId) {
-      return NextResponse.json({ error: 'Invalid YouTube URL' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Invalid YouTube URL' },
+        { status: 400 }
+      );
     }
 
     // Get transcript
     let transcript: string;
     try {
-      transcript = await getTranscript(videoId)
+      transcript = await getTranscript(videoId);
     } catch (transcriptError: any) {
-      return NextResponse.json({ error: transcriptError.message }, { status: 400 })
+      return NextResponse.json(
+        { error: transcriptError.message },
+        { status: 400 }
+      );
     }
 
     // Generate summary using OpenAI
-    const content = await generateSummary(transcript)
+    const content = await generateSummary(transcript);
 
     const summary = {
       id: videoId, // Using videoId as a unique identifier
-      content: content
-    }
+      content: content,
+    };
 
     console.log('Generated summary:', summary); // Add this line for debugging
 
-    return NextResponse.json({ summary })
+    return NextResponse.json({ summary });
   } catch (error) {
-    console.error('Error processing request:', error)
-    return NextResponse.json({ error: 'An error occurred while processing the request' }, { status: 500 })
+    console.error('Error processing request:', error);
+    return NextResponse.json(
+      { error: 'An error occurred while processing the request' },
+      { status: 500 }
+    );
   }
 }
 
 function extractVideoId(url: string): string | null {
-  const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/
-  const match = url.match(regex)
-  return match ? match[1] : null
+  const regex =
+    /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+  const match = url.match(regex);
+  return match ? match[1] : null;
 }
 
 async function getTranscript(videoId: string): Promise<string> {
   try {
     const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId);
-    
+
     if (!transcriptArray || transcriptArray.length === 0) {
       throw new Error('No transcript available for this video.');
     }
@@ -71,10 +81,16 @@ async function getTranscript(videoId: string): Promise<string> {
 // The generateSummary function remains the same
 async function generateSummary(transcript: string): Promise<string> {
   const response = await openai.chat.completions.create({
-    model: 'gpt-3.5-turbo',
+    model: 'gpt-4o',
     messages: [
-      { role: 'system', content: 'You are a helpful assistant that summarizes YouTube video transcripts and provides actionable steps if applicable. Format your response in markdown with specific headers and numbering.' },
-      { role: 'user', content: `Summarize the following transcript and provide actionable steps if applicable. Use the following markdown format:
+      {
+        role: 'system',
+        content:
+          'You are a helpful assistant that summarizes YouTube video transcripts in detail and provides actionable steps if applicable that the user can take. Format your response in markdown with specific headers and numbering.',
+      },
+      {
+        role: 'user',
+        content: `Summarize the following transcript and provide actionable steps if applicable in detail with relevant examples. Use the following markdown format:
 
 ## Summary:
 
@@ -88,11 +104,12 @@ async function generateSummary(transcript: string): Promise<string> {
 ...
 
 Transcript:
-${transcript}` },
+${transcript}`,
+      },
     ],
-  })
+  });
 
-  const summary = response.choices[0].message?.content || ''
+  const summary = response.choices[0].message?.content || '';
   console.log('Generated summary:', summary);
   return summary;
 }
