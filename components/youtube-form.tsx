@@ -54,9 +54,11 @@ export function YoutubeForm({ onSummaryGenerated }: { onSummaryGenerated: (summa
         onChange={(e) => setUrl(e.target.value)}
         required
       />
-      <Button type="submit" disabled={isLoading}>
-        {isLoading ? 'Processing...' : 'Summarize'}
-      </Button>
+      <div className="flex justify-center">
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? 'Processing...' : 'Summarize'}
+        </Button>
+      </div>
     </form>
   )
 }
