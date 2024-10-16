@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { useToast } from '@/hooks/use-toast'
+import { Button } from '@/src/app/components/ui/button'
+import { Input } from '@/src/app/components/ui/input'
+import { useToast } from '@/src/hooks/use-toast'
 
 type Summary = {
   id: string

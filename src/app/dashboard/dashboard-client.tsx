@@ -1,16 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { YoutubeForm } from '@/components/youtube-form'
-import { SummaryDisplay } from '@/components/summary-display'
-import { ThemeToggle } from '@/components/theme-toggle'
+import { YoutubeForm } from '@/src/app/components/youtube-form'
+import { SummaryDisplay } from '@/src/app/components/summary-display'
 
 type Summary = {
   id: string
   content: string
 }
 
-export default function DashboardPage() {
+export default function DashboardClient() {
   const [summary, setSummary] = useState<Summary | null>(null)
 
   const handleSummaryGenerated = (newSummary: Summary) => {
@@ -19,11 +18,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">YouScribe</h1>
-        <ThemeToggle />
-      </div>
+    <div>
       <YoutubeForm onSummaryGenerated={handleSummaryGenerated} />
       <SummaryDisplay summary={summary} />
     </div>

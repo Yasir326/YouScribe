@@ -2,10 +2,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/src/app/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/src/app/components/ui/card'
 import { Download, ThumbsUp, Copy } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '@/src/hooks/use-toast'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import React from 'react'
