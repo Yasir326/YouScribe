@@ -17,30 +17,34 @@ Youscribe is a powerful tool that transforms YouTube videos into actionable insi
 
 ## 🛠️ Tech Stack
 
-- **Backend**: Go (Gin framework)
-- **Database**: MongoDB
+- **Backend**: Next.js API Routes
+- **Database**: PostgreSQL
+- **ORM**: Prisma
 - **Authentication**: Kinde SSO
 - **Payment Processing**: Stripe
-- **Frontend**: [Your frontend technology, e.g., React, Vue.js]
+- **Frontend**: Next.js (React framework)
+- **UI Components**: shadcn/ui
+- **API Documentation**: Swagger
 
 ## 🏗️ Architecture
 
-Youscribe follows a microservices architecture:
+Youscribe follows a monolithic architecture with modular components:
 
-- **Auth Service**: Handles user registration, login, and token management.
-- **Transcript Service**: Fetches and processes YouTube video transcripts.
-- **Summary Service**: Generates summaries and action steps from transcripts.
-- **Payment Service**: Manages subscriptions and processes payments.
+- **Auth Module**: Integrates with Kinde for user registration, login, and token management.
+- **Transcript Module**: Fetches and processes YouTube video transcripts.
+- **Summary Module**: Generates summaries and action steps from transcripts using AI.
+- **Payment Module**: Integrates with Stripe to manage subscriptions and process payments.
+- **User Module**: Handles user-related operations and data management.
 
 ## 🚦 Getting Started
 
 ### Prerequisites
 
-- Go 1.16+
-- MongoDB
-- Node.js and npm (for frontend)
+- Node.js 18+ and npm
+- PostgreSQL
 - Kinde account
 - Stripe account
+- OpenAI API key
 
 ### Installation
 
@@ -54,21 +58,24 @@ Youscribe follows a microservices architecture:
    cd youscribe
    ```
 
-3. Install backend dependencies:
+3. Install dependencies:
    ```
-   go mod tidy
+   npm install
    ```
 
 4. Set up environment variables:
-   - Copy `.env.example` to `.env`
-   - Fill in the required values in `.env`
+   - Copy `.env.example` to `.env.local`
+   - Fill in the required values in `.env.local`
 
-5. Start the backend server:
+5. Set up the database and run migrations:
    ```
-   go run cmd/server/main.go
+   npx prisma migrate dev
    ```
 
-6. [Add steps for setting up and running the frontend]
+6. Start the development server:
+   ```
+   npm run dev
+   ```
 
 ## 🧪 Running Tests
 
