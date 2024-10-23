@@ -19,8 +19,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+    <Providers>
       <body className={inter.className}>
-        <Providers>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
@@ -34,8 +34,8 @@ export default function RootLayout({
               </main>
             </div>
           </ThemeProvider>
-        </Providers>
       </body>
+      </Providers>
     </html>
   );
 }

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/src/app/components/ui/button'
 import { Input } from '@/src/app/components/ui/input'
 import { useToast } from '@/src/hooks/use-toast'
+import { LoadingAnimation } from './loading-animation'
 
 type Summary = {
   id: string
@@ -55,9 +56,11 @@ export function YoutubeForm({ onSummaryGenerated }: { onSummaryGenerated: (summa
         required
       />
       <div className="flex justify-center">
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? 'Processing...' : 'Summarize'}
-        </Button>
+        {isLoading ? (
+          <LoadingAnimation />
+        ) : (
+          <Button type="submit">Summarize</Button>
+        )}
       </div>
     </form>
   )

@@ -1,21 +1,13 @@
 import { PrismaClient } from '@prisma/client';
 
-const globalForPrisma = global as typeof globalThis & { cachedPrisma?: PrismaClient }
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
-let prisma: PrismaClient;
+export const db = globalForPrisma.prisma || new PrismaClient({
+  log: ['query', 'info', 'warn', 'error'],
+});
 
-try {
-  if (process.env.NODE_ENV === 'production') {
-    prisma = new PrismaClient();
-  } else {
-    if (!globalForPrisma.cachedPrisma) {
-      globalForPrisma.cachedPrisma = new PrismaClient();
-    }
-    prisma = globalForPrisma.cachedPrisma;
-  }
-} catch (error) {
-  console.error('Failed to initialize Prisma client:', error);
-  throw new Error('Prisma client initialization failed. Please ensure you have run "prisma generate" and that your database is properly configured.');
-}
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db;
 
-export const db = prisma;
+process.on('beforeExit', async () => {
+  await db.$disconnect();
+});
