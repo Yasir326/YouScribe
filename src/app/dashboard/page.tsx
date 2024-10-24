@@ -1,4 +1,4 @@
-import { ThemeToggle } from '@/src/app/components/theme-toggle'
+import { ThemeToggle } from '@/src/app/components/ThemeToggle'
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
 import { redirect } from 'next/navigation'
 import { db } from '@/src/db'

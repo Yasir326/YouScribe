@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { YoutubeForm } from '@/src/app/components/youtube-form'
-import { SummaryDisplay } from '@/src/app/components/summary-display'
+import { YoutubeForm } from '@/src/app/components/YoutubeForm'
+import { SummaryDisplay } from '@/src/app/components/SummaryDisplay'
 
 type Summary = {
   id: string
