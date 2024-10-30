@@ -62,7 +62,7 @@ export function YoutubeForm({ onSummaryGenerated }: { onSummaryGenerated: (summa
             <div className="text-sm font-medium">
           <style>{styles}</style>
                 Processing
-                <span className="dots">...</span>
+                <span className="dots"></span>
               </div>
               <LoadingAnimation />
 
