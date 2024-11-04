@@ -8,6 +8,7 @@ import { LoadingAnimation } from './LoadingAnimation'
 
 type Summary = {
   id: string
+  title: string
   content: string
 }
 

@@ -20,12 +20,13 @@ export default async function DashboardPage() {
     });
   
     if (!dbUSer) redirect('/auth-callback?origin=dashboard');
+    const welcomeMessage = user.given_name ? `Welcome to YouScribe ${user.given_name}` : 'Welcome to YouScribe';
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <div className="w-1/3"></div>
-        <h1 className="text-3xl font-bold w-1/3 text-center">YouScribe</h1>
+        <h1 className="text-3xl font-bold w-1/3 text-center">{welcomeMessage}</h1>
         <div className="w-1/3 flex justify-end">
           <ThemeToggle />
         </div>

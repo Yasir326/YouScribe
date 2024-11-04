@@ -2,10 +2,13 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { YoutubeTranscript } from 'youtube-transcript';
+import { PrismaClient } from '@prisma/client';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
   try {
@@ -35,11 +38,18 @@ export async function POST(req: Request) {
     const content = await generateSummary(transcript);
 
     const summary = {
-      id: videoId, // Using videoId as a unique identifier
+      id: videoId,
+      title: content.split('\n')[0],
       content: content,
     };
 
-    console.log('Generated summary:', summary); // Add this line for debugging
+    await prisma.summary.create({
+      data: {
+        id: summary.id,
+        title: summary.title,
+        content: summary.content,
+      }
+    })
 
     return NextResponse.json({ summary });
   } catch (error) {
@@ -66,7 +76,6 @@ async function getTranscript(videoId: string): Promise<string> {
       throw new Error('No transcript available for this video.');
     }
 
-    // Combine all transcript parts into a single string
     const transcript = transcriptArray
       .map((item: { text: string }) => item.text)
       .join(' ');
@@ -78,7 +87,6 @@ async function getTranscript(videoId: string): Promise<string> {
   }
 }
 
-// The generateSummary function remains the same
 async function generateSummary(transcript: string): Promise<string> {
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -90,8 +98,10 @@ async function generateSummary(transcript: string): Promise<string> {
       },
       {
         role: 'user',
-        content: `Summarize the following transcript and provide actionable steps if applicable in detail with relevant examples. Use the following markdown format, use suitable emojis alongside the action steps:
+        content: `Summarize the following transcript and provide actionable steps if applicable in detail with relevant examples. Use the following markdown format, use suitable emojis alongside the action steps and title:
       :
+
+## Title:
 
 ## Summary:
 
@@ -111,6 +121,5 @@ ${transcript}`,
   });
 
   const summary = response.choices[0].message?.content || '';
-  console.log('Generated summary:', summary);
   return summary;
 }
