@@ -38,7 +38,7 @@ export async function POST(req: Request) {
 
     const summary = {
       id: videoId,
-      title: content.split('\n')[0],
+      title: content.split('\n')[0].replace('# ', ''),
       content: content,
     };
 
