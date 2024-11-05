@@ -23,7 +23,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Get transcript
     let transcript: string;
     try {
       transcript = await getTranscript(videoId);

@@ -4,12 +4,9 @@ import { useState, useEffect } from 'react';
 import { YoutubeForm } from '@/src/app/components/YoutubeForm';
 import { SummaryDisplay } from '@/src/app/components/SummaryDisplay';
 import SideMenu from '@/src/app/components/SideMenu';
+import { Summary } from '@/src/type';
 
-type Summary = {
-  id: string;
-  title: string;
-  content: string;
-};
+
 
 export default function DashboardClient() {
   const [, setSummary] = useState<Summary | null>(null);
@@ -41,12 +38,12 @@ export default function DashboardClient() {
   };
 
   return (
-    <div className="flex">
-      <SideMenu summaries={summaries} onSelectSummary={handleSelectSummary} />
-      <div className="flex-grow p-4">
-        <YoutubeForm onSummaryGenerated={handleSummaryGenerated} />
-        {selectedSummary && <SummaryDisplay summary={selectedSummary} />}
-      </div>
+    <div className="grid min-h-screen md:grid-cols-[260px_1fr]">
+    <SideMenu summaries={summaries} onSelectSummary={handleSelectSummary} />
+    <main className="flex flex-col p-6">
+      <YoutubeForm onSummaryGenerated={handleSummaryGenerated} />
+      {selectedSummary && <SummaryDisplay summary={selectedSummary} />}
+      </main>
     </div>
   );
 }

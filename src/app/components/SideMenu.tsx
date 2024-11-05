@@ -1,31 +1,61 @@
-import React from 'react';
-
-type Summary = {
-  id: string;
-  title: string;
-  content: string;
-};
+import { Summary } from '@/src/type'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarProvider,
+  SidebarHeader,
+} from '@/src/app/components/ui/sidebar'
 
 type SideMenuProps = {
-  summaries: Summary[];
-  onSelectSummary: (id: string) => void;
-};
+  summaries: Summary[]
+  onSelectSummary: (id: string) => void
+}
 
 export default function SideMenu({ summaries, onSelectSummary }: SideMenuProps) {
   return (
-    <div className="w-64 h-full bg-gray-100 p-4 border-r">
-      <h2 className="text-lg font-semibold mb-4">Summaries</h2>
-      <ul>
-        {summaries.map((summary) => (
-          <li
-            key={summary.id}
-            onClick={() => onSelectSummary(summary.id)}
-            className="cursor-pointer mb-2 p-2 hover:bg-gray-200 rounded"
-          >
-            {summary.title}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+    <SidebarProvider>
+      <Sidebar className="border-r h-[calc(100vh-4rem)]">
+        <SidebarHeader className="p-4">
+          <div className="flex items-center space-x-4">
+            <div className="flex-shrink-0 flex flex-col relative items-end">
+              <div>
+                <div className="pt-0">
+                  <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full">
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold">YouScribe</h2>
+            </div>
+          </div>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Summaries</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {summaries.map((summary) => (
+                  <SidebarMenuItem key={summary.id}>
+                    <SidebarMenuButton
+                      onClick={() => onSelectSummary(summary.id)}
+                      className="w-full"
+                    >
+                      {summary.title}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+      </Sidebar>
+    </SidebarProvider>
+  )
 }

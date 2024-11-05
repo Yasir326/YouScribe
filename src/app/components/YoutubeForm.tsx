@@ -5,13 +5,7 @@ import { Button } from '@/src/app/components/ui/button'
 import { Input } from '@/src/app/components/ui/input'
 import { useToast } from '@/src/hooks/use-toast'
 import { LoadingAnimation } from './LoadingAnimation'
-
-type Summary = {
-  id: string
-  title: string
-  content: string
-}
-
+import { Summary } from '@/src/type'
 export function YoutubeForm({ onSummaryGenerated }: { onSummaryGenerated: (summary: Summary) => void }) {
   const [url, setUrl] = useState('')
   const [isLoading, setIsLoading] = useState(false)
