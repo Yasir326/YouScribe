@@ -1,8 +1,9 @@
-import { ThemeToggle } from '@/src/app/components/theme-toggle'
+import { ThemeToggle } from '../components/theme-toggle'
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
 import { redirect } from 'next/navigation'
-import { db } from '@/src/db'
+import { db } from '../../db'
 import DashboardClient from './dashboard-client'
+import React from 'react'
 
 
 

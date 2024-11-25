@@ -2,10 +2,13 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { YoutubeTranscript } from 'youtube-transcript';
+import { PrismaClient } from '@prisma/client';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
   try {
@@ -35,11 +38,18 @@ export async function POST(req: Request) {
     const content = await generateSummary(transcript);
 
     const summary = {
-      id: videoId, // Using videoId as a unique identifier
+      id: videoId,
+      title: content.split('\n')[0],
       content: content,
     };
 
-    console.log('Generated summary:', summary); // Add this line for debugging
+    await prisma.summary.create({
+      data: {
+        id: summary.id,
+        title: summary.title,
+        content: summary.content,
+      }
+    })
 
     return NextResponse.json({ summary });
   } catch (error) {

@@ -16,6 +16,7 @@ model User {
   stripePriceId          String?   @map("stripe_price_id")
   stripeCurrentPeriodEnd DateTime? @map("stripe_current_period_end")
   File                   File[]
+  Summary                Summary[]
 }
 
 model File {
@@ -35,4 +36,14 @@ enum UploadStatus {
   PROCESSING
   FAILED
   SUCCESS
+}
+
+model Summary {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  User      User     @relation(fields: [userId], references: [id])
 }
