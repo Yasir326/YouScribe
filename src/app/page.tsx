@@ -1,5 +1,6 @@
 "use client";
 
+import { RegisterLink } from '@kinde-oss/kinde-auth-nextjs/components';
 import Image from "next/image";
 import { useState, useEffect } from "react";
 
@@ -7,49 +8,18 @@ export default function Home() {
   const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
-    // Check for user's preference in localStorage or system preference
     const isDarkMode = localStorage.getItem('darkMode') === 'true' || 
       (!('darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
     setDarkMode(isDarkMode);
   }, []);
 
   useEffect(() => {
-    // Update body class and localStorage when darkMode changes
     document.body.classList.toggle('dark', darkMode);
     localStorage.setItem('darkMode', darkMode.toString());
   }, [darkMode]);
 
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
-
   return (
     <div className={`min-h-screen ${darkMode ? 'dark bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'} font-sans`}>
-      <header className={`${darkMode ? 'bg-gray-800' : 'bg-black'} text-white p-4`}>
-        <nav className="max-w-7xl mx-auto flex justify-between items-center">
-          <Image
-            src="/youscribe-logo.svg"
-            alt="YouScribe Logo"
-            width={120}
-            height={30}
-          />
-          <div className="space-x-6">
-            <a href="#features" className="hover:text-gray-300">Features</a>
-            <a href="#how-it-works" className="hover:text-gray-300">How It Works</a>
-            <a href="#pricing" className="hover:text-gray-300">Pricing</a>
-          </div>
-          <button
-            onClick={toggleDarkMode}
-            className="ml-6 p-2 rounded-full bg-gray-700 hover:bg-gray-600"
-          >
-            {darkMode ? (
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-            ) : (
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
-            )}
-          </button>
-        </nav>
-      </header>
 
       <main>
         <section className={`text-center py-20 ${darkMode ? 'bg-gradient-to-b from-gray-800 to-gray-900' : 'bg-gradient-to-b from-gray-100 to-white'}`}>
@@ -129,12 +99,11 @@ export default function Home() {
         <section className="py-16">
           <div className="max-w-6xl mx-auto px-4 text-center">
             <h2 className="text-3xl font-bold mb-8">Ready to Supercharge Your Learning?</h2>
-            <a
-              href="#sign-up"
+            <RegisterLink
               className="bg-blue-600 text-white px-8 py-3 rounded-full text-lg font-semibold hover:bg-blue-700 transition duration-300"
             >
               Sign Up for Free
-            </a>
+            </RegisterLink>
           </div>
         </section>
       </main>

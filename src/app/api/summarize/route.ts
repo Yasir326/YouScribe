@@ -81,7 +81,7 @@ async function getTranscript(videoId: string): Promise<string> {
 // The generateSummary function remains the same
 async function generateSummary(transcript: string): Promise<string> {
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    model: 'gpt-4o-mini',
     messages: [
       {
         role: 'system',
@@ -90,7 +90,10 @@ async function generateSummary(transcript: string): Promise<string> {
       },
       {
         role: 'user',
-        content: `Summarize the following transcript and provide actionable steps if applicable in detail with relevant examples. Use the following markdown format:
+        content: `Summarize the following transcript and provide actionable steps if applicable in detail with relevant examples. Use the following markdown format, use suitable emojis alongside the action steps and title:
+      :
+
+## Title:
 
 ## Summary:
 
@@ -104,6 +107,7 @@ async function generateSummary(transcript: string): Promise<string> {
 ...
 
 Transcript:
+   
 ${transcript}`,
       },
     ],
