@@ -5,7 +5,7 @@ export const PLANS = [
     price: {
       amount: 9.99,
       priceIds: {
-        test: '',
+        test: process.env.STRIPE_BASIC_PRICE_ID,
         production: ''
       }
     },
@@ -17,7 +17,7 @@ export const PLANS = [
     price: {
       amount: 14.99,
       priceIds: {
-        test: '',
+        test: process.env.STRIPE_PLUS_PRICE_ID,
         production: ''
       }
     },
