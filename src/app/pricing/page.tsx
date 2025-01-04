@@ -4,6 +4,12 @@ import { TooltipProvider } from '../components/ui/tooltip';
 import { pricingItems } from './pricingItems';
 import { PLANS } from '@/src/config/stripe';
 import { cn } from '@/src/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@radix-ui/react-tooltip';
+import { HelpCircle } from 'lucide-react';
 
 const PricingPage = async () => {
   const { getUser } = getKindeServerSession();
@@ -11,15 +17,15 @@ const PricingPage = async () => {
 
   return (
     <>
-      <MaxWidthWrapper className='mb-8 mt-24 text-center max-w-5xl'>
-        <div className='mx-auto mb-10 sm:mx-w-lg'>
-          <h1 className='text-6xl font-bold sm:text-7xl'>Pricing</h1>
-          <p className='mt-5 text-grey-600'>
+      <MaxWidthWrapper className='mb-8 mt-16 text-center max-w-7xl'>
+        <div className='mx-auto mb-8 sm:max-w-lg'>
+          <h1 className='text-5xl font-bold sm:text-6xl'>Pricing</h1>
+          <p className='mt-4 text-gray-600 sm:text-lg'>
             Simple pricing for your needs. No hidden fees.
           </p>
         </div>
 
-        <div className='pt-12 grid  grid-cols-1 gap-10 lg:grid-cols-3'>
+        <div className='pt-10 grid grid-cols-1 gap-6 lg:grid-cols-3'>
           <TooltipProvider>
             {pricingItems.map(({ plan, tagline, quota, features }) => {
               const price =
@@ -28,11 +34,17 @@ const PricingPage = async () => {
               return (
                 <div
                   key={plan}
-                  className={cn('relative rounded-2xl bg-white dark:bg-gray-900 shadow-lg', {
-                    'border-2 border-blue-600 shadow-blue-200 dark:shadow-blue-900': plan === 'Pro',
-                    'border-2 border-green-600 shadow-green-200 dark:shadow-green-900': plan === 'Plus',
-                    'border-2 border-gray-600 shadow-gray-200 dark:shadow-gray-900': plan === 'Basic',
-                  })}
+                  className={cn(
+                    'relative rounded-2xl bg-white dark:bg-gray-900 shadow-lg',
+                    {
+                      'border-2 border-blue-600 shadow-blue-200 dark:shadow-blue-900':
+                        plan === 'Pro',
+                      'border-2 border-green-600 shadow-green-200 dark:shadow-green-900':
+                        plan === 'Plus',
+                      'border-2 border-gray-600 shadow-gray-200 dark:shadow-gray-900':
+                        plan === 'Basic',
+                    }
+                  )}
                 >
                   {plan === 'Pro' && (
                     <div className='absolute -top-5 left-0 right-0 mx-auto w-32 rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 px-3 py-2 text-sm font-medium text-white'>
@@ -44,9 +56,36 @@ const PricingPage = async () => {
                     <h3 className='my-3 text-center font-display text-3xl font-bold dark:text-white'>
                       {plan}
                     </h3>
-                    <p className='text-gray-500 dark:text-gray-400'>{tagline}</p>
-                    <p className='my-5 font-display text-6xl font-semibold dark:text-white'>${price}</p>
-                    <p className='text-gray-500 dark:text-gray-400'>per month</p>
+                    <p className='text-gray-500 dark:text-gray-400'>
+                      {tagline}
+                    </p>
+                    <p className='my-5 font-display text-6xl font-semibold dark:text-white'>
+                      ${price}
+                    </p>
+                    <p className='text-gray-500 dark:text-gray-400'>
+                      per month
+                    </p>
+                  </div>
+                  <div className='flex h-20 items-center justify-center border-b border-t border-gray-200 bg-gray-50 dark:border-gray-800'>
+                    <div className='flex items-center space-x-1'>
+                      <p className='text-gray-600 dark:text-gray-400'>
+                        {quota.toLocaleString()} Requests a month included
+                      </p>
+                      <Tooltip>
+                        <TooltipTrigger className='cursor-default'>
+                          <HelpCircle className='h-4 w-4 text-zinc-500' />
+                        </TooltipTrigger>
+                        <TooltipContent
+                          side='bottom'
+                          align='end'
+                          className='w-60 p-2'
+                        >
+                          <p className='text-sm text-gray-500 dark:text-gray-400'>
+                            How many requests you can make per month
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
                   </div>
                 </div>
               );
