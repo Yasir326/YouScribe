@@ -1,4 +1,4 @@
-// import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
+import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
 import MaxWidthWrapper from '../components/MaxWidthWrapper';
 import { TooltipProvider } from '../components/ui/tooltip';
 import { pricingItems } from './pricingItems';
@@ -9,11 +9,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@radix-ui/react-tooltip';
-import { Check, HelpCircle, Minus } from 'lucide-react';
+import { ArrowRight, Check, HelpCircle, Link, Minus } from 'lucide-react';
+import { buttonVariants } from '../components/ui/button';
+import UpgradeButton from '../components/UpgradeButton';
 
 const PricingPage = async () => {
-  // const { getUser } = getKindeServerSession();
-  // const user = await getUser();
+  const { getUser } = getKindeServerSession();
+  const user = await getUser();
 
   return (
     <>
@@ -110,7 +112,9 @@ const PricingPage = async () => {
                               <TooltipTrigger className='cursor-default'>
                                 <HelpCircle className='h-4 w-4 text-zinc-500' />
                               </TooltipTrigger>
-                              <TooltipContent className='sm:text-sm'>{footnote}</TooltipContent>
+                              <TooltipContent className='sm:text-sm'>
+                                {footnote}
+                              </TooltipContent>
                             </Tooltip>
                           </div>
                         ) : (
@@ -125,6 +129,22 @@ const PricingPage = async () => {
                       </li>
                     ))}
                   </ul>
+                  <div className='border-t border-gray-200 dark:border-gray-800' />
+                  <div className='p-5'>
+                    {user ? (
+                      <UpgradeButton />
+                    ) : (
+                      <Link
+                        href='/sign-in'
+                        className={buttonVariants({
+                          className: 'w-full',
+                        })}
+                      >
+                        {user ? 'Upgrade now' : 'Sign up'}
+                        <ArrowRight className='h-5 w-5 ml-1.5' />
+                      </Link>
+                    )}
+                  </div>
                 </div>
               );
             })}
