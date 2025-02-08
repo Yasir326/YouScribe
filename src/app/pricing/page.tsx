@@ -1,4 +1,4 @@
-import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
+// import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
 import MaxWidthWrapper from '../components/MaxWidthWrapper';
 import { TooltipProvider } from '../components/ui/tooltip';
 import { pricingItems } from './pricingItems';
@@ -9,11 +9,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@radix-ui/react-tooltip';
-import { HelpCircle } from 'lucide-react';
+import { Check, HelpCircle, Minus } from 'lucide-react';
 
 const PricingPage = async () => {
-  const { getUser } = getKindeServerSession();
-  const user = await getUser();
+  // const { getUser } = getKindeServerSession();
+  // const user = await getUser();
 
   return (
     <>
@@ -87,6 +87,44 @@ const PricingPage = async () => {
                       </Tooltip>
                     </div>
                   </div>
+                  <ul className='my-10 space-y-5 px-8'>
+                    {features.map(({ text, footnote, negative }) => (
+                      <li key={text} className='flex space-x-3'>
+                        <div className='flex-shrink-0'>
+                          {negative ? (
+                            <Minus className='h-6 w-6 text-gray-300' />
+                          ) : (
+                            <Check className='h-6 w-6 teÏxt-green-500' />
+                          )}
+                        </div>
+                        {footnote ? (
+                          <div className='flex items-center space-x-1'>
+                            <p
+                              className={cn('text-gray-400', {
+                                'text-gray-600': negative,
+                              })}
+                            >
+                              {text}
+                            </p>
+                            <Tooltip delayDuration={300}>
+                              <TooltipTrigger className='cursor-default'>
+                                <HelpCircle className='h-4 w-4 text-zinc-500' />
+                              </TooltipTrigger>
+                              <TooltipContent className='sm:text-sm'>{footnote}</TooltipContent>
+                            </Tooltip>
+                          </div>
+                        ) : (
+                          <p
+                            className={cn('text-gray-400', {
+                              'text-gray-600': negative,
+                            })}
+                          >
+                            {text}
+                          </p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               );
             })}

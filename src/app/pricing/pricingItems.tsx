@@ -1,4 +1,18 @@
-export const pricingItems = [
+export type Feature = {
+  text: string;
+  footnote?: string;
+  negative?: boolean;
+}
+
+type PricingItem = {
+  plan: string;
+  tagline: string;
+  quota: number | 'unlimited';
+  price: number;
+  features: Feature[];
+}
+
+export const pricingItems: PricingItem[] = [
   {
     plan: 'Basic',
     tagline: 'Perfect for getting started.',
@@ -6,7 +20,7 @@ export const pricingItems = [
     price: 9.99,
     features: [
       {
-        text: '100 video summaries per month',
+        text: '100 video summaries p/m',
         footnote: 'Reset monthly on billing date',
       },
       {
@@ -32,7 +46,7 @@ export const pricingItems = [
     price: 14.99,
     features: [
       {
-        text: '500 video summaries per month',
+        text: '500 video summaries p/m',
         footnote: 'Reset monthly on billing date',
       },
       {
