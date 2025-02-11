@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 const COUNT = 64;
 
@@ -25,27 +25,27 @@ const containerStyle = {
   gap: 'var(--width)',
 } as React.CSSProperties;
 
-const tubeStyle: React.CSSProperties = {
-  transformStyle: 'preserve-3d',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  animation: 'speen 6s infinite linear',
-  width: 'calc(var(--dist) * 2)',
-  height: 'var(--size)',
-};
+// const tubeStyle: React.CSSProperties = {
+//   transformStyle: 'preserve-3d',
+//   display: 'flex',
+//   alignItems: 'center',
+//   justifyContent: 'center',
+//   animation: 'speen 6s infinite linear',
+//   width: 'calc(var(--dist) * 2)',
+//   height: 'var(--size)',
+// };
 
-const stripStyle: React.CSSProperties = {
-  transformStyle: 'preserve-3d',
-  backgroundColor: 'white',
-  height: 'var(--size)',
-  width: 'var(--width)',
-  position: 'absolute',
-  backgroundImage: 'var(--bg)',
-  backgroundSize: 'calc(var(--width) * var(--count)) auto',
-  backgroundRepeat: 'no-repeat',
-  backfaceVisibility: 'hidden',
-};
+// const stripStyle: React.CSSProperties = {
+//   transformStyle: 'preserve-3d',
+//   backgroundColor: 'white',
+//   height: 'var(--size)',
+//   width: 'var(--width)',
+//   position: 'absolute',
+//   backgroundImage: 'var(--bg)',
+//   backgroundSize: 'calc(var(--width) * var(--count)) auto',
+//   backgroundRepeat: 'no-repeat',
+//   backfaceVisibility: 'hidden',
+// };
 
 const keyframes = `
   @keyframes speen {
@@ -54,24 +54,56 @@ const keyframes = `
   }
 `;
 
+const progressBarStyle: React.CSSProperties = {
+  width: '60%',
+  height: '20px',
+  backgroundColor: '#333',
+  borderRadius: '10px',
+  overflow: 'hidden',
+  position: 'relative',
+};
+
+const progressStyle: React.CSSProperties = {
+  height: '100%',
+  backgroundColor: '#4CAF50',
+  transition: 'width 0.3s ease-in-out',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: 'white',
+  fontSize: '14px',
+};
+
 export function LoadingAnimation() {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setProgress((prevProgress) => {
+        if (prevProgress >= 100) {
+          clearInterval(timer);
+          return 100;
+        }
+        return prevProgress + 1;
+      });
+    }, 50); // Adjust speed by changing this value
+
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <div style={containerStyle}>
       <style>{globalStyles + keyframes}</style>
-      {[0, 1, 2].map((tubeIndex) => (
-        <div key={tubeIndex} style={{...tubeStyle, animationDelay: `${-2.5 * (tubeIndex + 1)}s`}}>
-          {[...Array(COUNT)].map((_, stripIndex) => (
-            <div
-              key={stripIndex}
-              style={{
-                ...stripStyle,
-                transform: `rotateY(calc(1turn * ${stripIndex + 1} / var(--count))) translateZ(var(--dist))`,
-                backgroundPosition: `calc(var(--width) * -${stripIndex}) center`,
-              }}
-            />
-          ))}
+      <div style={progressBarStyle}>
+        <div 
+          style={{
+            ...progressStyle,
+            width: `${progress}%`,
+          }}
+        >
+          {progress}%
         </div>
-      ))}
+      </div>
     </div>
   );
 }

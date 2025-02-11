@@ -5,6 +5,7 @@ import { Button } from '@/src/app/components/ui/button'
 import { Input } from '@/src/app/components/ui/input'
 import { useToast } from '@/src/hooks/use-toast'
 import { LoadingAnimation } from './loading-animation'
+import { ChatComponent } from './ChatComponent'
 
 type Summary = {
   id: string
@@ -14,6 +15,8 @@ type Summary = {
 export function YoutubeForm({ onSummaryGenerated }: { onSummaryGenerated: (summary: Summary) => void }) {
   const [url, setUrl] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [transcript, setTranscript] = useState('')
+  const [summary, setSummary] = useState<Summary | null>(null)
   const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,6 +36,8 @@ export function YoutubeForm({ onSummaryGenerated }: { onSummaryGenerated: (summa
       }
 
       const data = await response.json()
+      setSummary(data.summary)
+      setTranscript(data.transcript)
       onSummaryGenerated(data.summary)
     } catch (error) {
       console.error('Error:', error)
@@ -46,22 +51,49 @@ export function YoutubeForm({ onSummaryGenerated }: { onSummaryGenerated: (summa
     }
   }
 
+  const extractVideoId = (url: string) => {
+    const match = url.match(/[?&]v=([^&]+)/)
+    return match ? match[1] : null
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <Input
-        type="url"
-        placeholder="Enter YouTube URL"
-        value={url}
-        onChange={(e) => setUrl(e.target.value)}
-        required
-      />
-      <div className="flex justify-center">
-        {isLoading ? (
-          <LoadingAnimation />
-        ) : (
-          <Button type="submit">Summarize</Button>
-        )}
-      </div>
-    </form>
+    <div className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Input
+          type="url"
+          placeholder="Enter YouTube URL"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          required
+        />
+        <div className="flex justify-center">
+          {isLoading ? (
+            <LoadingAnimation />
+          ) : (
+            <Button type="submit">Summarize</Button>
+          )}
+        </div>
+      </form>
+
+      {summary && (
+        <div className="flex flex-col md:flex-row mt-8 gap-4">
+          <div className="w-full md:w-1/2 bg-gray-50 dark:bg-gray-800 rounded-lg p-4 max-h-96 overflow-y-auto">
+            <iframe
+              width="100%"
+              height="315"
+              src={`https://www.youtube.com/embed/${extractVideoId(url)}`}
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+          </div>
+
+          <div className="w-full md:w-1/2">
+            <ChatComponent summary={summary.content} transcript={transcript} />
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
