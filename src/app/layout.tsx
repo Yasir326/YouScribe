@@ -28,7 +28,6 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <div className="flex flex-col min-h-screen">
-              <Navbar />
               <main className="flex-grow">
                 {children}
               </main>

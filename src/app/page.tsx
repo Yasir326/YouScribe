@@ -1,124 +1,168 @@
-"use client";
+"use client"
 
-import { RegisterLink } from '@kinde-oss/kinde-auth-nextjs/components';
-import Image from "next/image";
-import { useState, useEffect } from "react";
+import { Button } from "@/src/app/components/ui/button"
+import { motion } from "framer-motion"
+import { FileText, Sparkles, Youtube } from "lucide-react"
+import { FloatingPaper } from "@/src/app/components/floating-paper"
+import { RoboAnimation } from "@/src/app/components/robo-animation"
+import { SparklesCore } from "@/src/app/components/sparkles"
+import Image from "next/image"
+import Link from "next/link"
+import Navbar from './components/Navbar'
 
 export default function Home() {
-  const [darkMode, setDarkMode] = useState(false);
-
-  useEffect(() => {
-    const isDarkMode = localStorage.getItem('darkMode') === 'true' || 
-      (!('darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    setDarkMode(isDarkMode);
-  }, []);
-
-  useEffect(() => {
-    document.body.classList.toggle('dark', darkMode);
-    localStorage.setItem('darkMode', darkMode.toString());
-  }, [darkMode]);
-
   return (
-    <div className={`min-h-screen ${darkMode ? 'dark bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'} font-sans`}>
+    <main className="min-h-screen bg-black/[0.96] antialiased bg-grid-white/[0.02] relative overflow-hidden">
+      {/* Ambient background with moving particles */}
+      <div className="h-full w-full absolute inset-0 z-0">
+        <SparklesCore
+          id="tsparticlesfullpage"
+          background="transparent"
+          minSize={0.6}
+          maxSize={1.4}
+          particleDensity={100}
+          className="w-full h-full"
+          particleColor="#FFFFFF"
+        />
+      </div>
 
-      <main>
-        <section className={`text-center py-20 ${darkMode ? 'bg-gradient-to-b from-gray-800 to-gray-900' : 'bg-gradient-to-b from-gray-100 to-white'}`}>
-          <h1 className="text-5xl font-bold mb-4">YouScribe</h1>
-          <p className="text-xl mb-8">Absorb YouTube knowledge faster than ever.</p>
-          <a
-            href="#get-started"
-            className="bg-blue-600 text-white px-8 py-3 rounded-full text-lg font-semibold hover:bg-blue-700 transition duration-300"
-          >
-            Get Started
-          </a>
-        </section>
+      <div className="relative z-10">
+        <Navbar />
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="max-w-4xl mx-auto text-center pt-20 pb-16">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
+                YouScribe:
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
+                  {" "}
+                  Absorb YouTube Knowledge Faster
+                </span>
+              </h1>
+            </motion.div>
 
-        <section className="max-w-6xl mx-auto py-16 px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl font-bold mb-4">Learn Smarter, Not Harder</h2>
-              <p className="text-lg mb-6">
-                YouScribe transforms YouTube videos into interactive learning experiences.
-                Dive deeper into content, retain information better, and accelerate your learning journey.
-              </p>
-              <ul className="space-y-2">
-                <li className="flex items-center">
-                  <svg className="w-6 h-6 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-                  AI-powered video summaries
-                </li>
-                <li className="flex items-center">
-                  <svg className="w-6 h-6 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-                  Interactive transcripts
-                </li>
-                <li className="flex items-center">
-                  <svg className="w-6 h-6 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-                  Detailed Action Steps
-                </li>
-              </ul>
-            </div>
-            <div className="relative h-96">
-              <Image
-                src="/youscribe-demo.png"
-                alt="YouScribe Demo"
-                layout="fill"
-                objectFit="contain"
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="text-gray-400 text-xl mb-8 max-w-2xl mx-auto"
+            >
+              Transform YouTube videos into interactive learning experiences. Dive deeper, retain better, and accelerate
+              your learning journey.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="flex flex-col sm:flex-row items-center justify-center gap-4"
+            >
+              <RegisterLink>
+                <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-white px-8">
+                  Get Started
+                </Button>
+              </RegisterLink>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Features Section */}
+        <section className="py-20 bg-gray-900/50 backdrop-blur-sm">
+          <div className="container mx-auto px-6">
+            <h2 className="text-3xl font-bold text-white mb-12 text-center">How YouScribe Works</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <FeatureCard
+                icon={<Youtube className="w-8 h-8 text-purple-400" />}
+                title="Find a Video"
+                description="Paste any YouTube URL into YouScribe"
+              />
+              <FeatureCard
+                icon={<Sparkles className="w-8 h-8 text-purple-400" />}
+                title="Get Insights"
+                description="Our AI analyzes and summarizes the content"
+              />
+              <FeatureCard
+                icon={<FileText className="w-8 h-8 text-purple-400" />}
+                title="Learn Faster"
+                description="Interact with the content and boost retention"
               />
             </div>
           </div>
         </section>
 
-        <section className={`${darkMode ? 'bg-gray-800' : 'bg-gray-900'} text-white py-16`}>
-          <div className="max-w-6xl mx-auto px-4">
-            <h2 className="text-3xl font-bold mb-8 text-center">How YouScribe Works</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="text-center">
-                <div className="bg-blue-600 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Find a Video</h3>
-                <p>Paste any YouTube URL into YouScribe</p>
+        {/* Demo Section */}
+        <section className="py-20">
+          <div className="container mx-auto px-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+              <div>
+                <h2 className="text-3xl font-bold text-white mb-4">Learn Smarter, Not Harder</h2>
+                <p className="text-gray-400 text-lg mb-6">
+                  YouScribe transforms YouTube videos into interactive learning experiences. Dive deeper into content,
+                  retain information better, and accelerate your learning journey.
+                </p>
+                <ul className="space-y-2 text-gray-300">
+                  <li className="flex items-center">
+                    <Sparkles className="w-6 h-6 mr-2 text-purple-400" />
+                    AI-powered video summaries
+                  </li>
+                  <li className="flex items-center">
+                    <Sparkles className="w-6 h-6 mr-2 text-purple-400" />
+                    Interactive transcripts
+                  </li>
+                  <li className="flex items-center">
+                    <Sparkles className="w-6 h-6 mr-2 text-purple-400" />
+                    Detailed Action Steps
+                  </li>
+                </ul>
               </div>
-              <div className="text-center">
-                <div className="bg-blue-600 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Get Insights</h3>
-                <p>Our AI analyzes and summarizes the content</p>
-              </div>
-              <div className="text-center">
-                <div className="bg-blue-600 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Learn Faster</h3>
-                <p>Interact with the content and boost retention</p>
+              <div className="relative h-96">
+                <Image src="/youscribe-demo.png" alt="YouScribe Demo" layout="fill" objectFit="contain" />
               </div>
             </div>
           </div>
         </section>
 
-        <section className="py-16">
-          <div className="max-w-6xl mx-auto px-4 text-center">
-            <h2 className="text-3xl font-bold mb-8">Ready to Supercharge Your Learning?</h2>
-            <RegisterLink
-              className="bg-blue-600 text-white px-8 py-3 rounded-full text-lg font-semibold hover:bg-blue-700 transition duration-300"
-            >
-              Sign Up for Free
+        {/* CTA Section */}
+        <section className="py-20 bg-gray-900/50 backdrop-blur-sm">
+          <div className="container mx-auto px-6 text-center">
+            <h2 className="text-3xl font-bold text-white mb-8">Ready to Supercharge Your Learning?</h2>
+            <RegisterLink>
+              <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-white px-8">
+                Sign Up for Free
+              </Button>
             </RegisterLink>
           </div>
         </section>
-      </main>
 
-      <footer className={`${darkMode ? 'bg-gray-800' : 'bg-gray-100'} py-8`}>
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex justify-between items-center">
-            <p>&copy; 2024 YouScribe. All rights reserved.</p>
-            <div className="space-x-4">
-              <a href="#privacy" className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>Privacy Policy</a>
-              <a href="#terms" className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>Terms of Service</a>
-            </div>
-          </div>
+        {/* Floating papers background */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <FloatingPaper count={6} />
         </div>
-      </footer>
+
+        {/* Animated YoutubeLogo */}
+        <div className="absolute bottom-0 right-0 w-96 h-96 pointer-events-none">
+          <RoboAnimation />
+        </div>
+      </div>
+    </main>
+  )
+}
+
+function RegisterLink({ children }: { children: React.ReactNode }) {
+  return (
+    <Link href="/register" className="w-full">
+      {children}
+    </Link>
+  )
+}
+
+function FeatureCard({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {
+  return (
+    <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg text-center">
+      <div className="bg-purple-600/20 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+        {icon}
+      </div>
+      <h3 className="text-xl font-semibold text-white mb-2">{title}</h3>
+      <p className="text-gray-400">{description}</p>
     </div>
-  );
+  )
 }
