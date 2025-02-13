@@ -1,49 +1,26 @@
-'use client';
+'use client'
 
-import { useState, useEffect } from 'react';
-import { YoutubeForm } from '@/src/app/components/YoutubeForm';
-import { SummaryDisplay } from '@/src/app/components/SummaryDisplay';
-import SideMenu from '@/src/app/components/SideMenu';
-import { Summary } from '@/src/type';
+import { useState } from 'react'
+import { YoutubeForm } from '../components/YoutubeForm'
+import { SummaryDisplay } from '../components/SummaryDisplay'
 
-
+type Summary = {
+  id: string
+  content: string
+}
 
 export default function DashboardClient() {
-  const [, setSummary] = useState<Summary | null>(null);
-  const [summaries, setSummaries] = useState<Summary[]>([]); // New state to store all summaries
-  const [selectedSummary, setSelectedSummary] = useState<Summary | null>(null);
-
-  useEffect(() => {
-    const fetchSummaries = async () => {
-      try {
-        const res = await fetch('/api/summaries'); // Endpoint to get summaries
-        const data = await res.json();
-        setSummaries(data);
-      } catch (error) {
-        console.error('Error fetching summaries:', error);
-      }
-    };
-    fetchSummaries();
-  }, [])
-
-  const handleSelectSummary = (id: string) => {
-    const selected = summaries.find((s) => s.id === id);
-    if (selected) {
-      setSelectedSummary(selected);
-    }
-  };
+  const [summary, setSummary] = useState<Summary | null>(null)
 
   const handleSummaryGenerated = (newSummary: Summary) => {
-    setSummary(newSummary);
-  };
+    console.log('New summary received:', newSummary)
+    setSummary(newSummary)
+  }
 
   return (
-    <div className="grid min-h-screen md:grid-cols-[260px_1fr]">
-    <SideMenu summaries={summaries} onSelectSummary={handleSelectSummary} />
-    <main className="flex flex-col p-6">
+    <div>
       <YoutubeForm onSummaryGenerated={handleSummaryGenerated} />
-      {selectedSummary && <SummaryDisplay summary={selectedSummary} />}
-      </main>
+      <SummaryDisplay summary={summary} />
     </div>
-  );
+  )
 }

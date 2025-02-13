@@ -127,7 +127,7 @@ export default function Home() {
             <h2 className="text-3xl font-bold text-white mb-8">Ready to Supercharge Your Learning?</h2>
             <RegisterLink>
               <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-white px-8">
-                Sign Up for Free
+                Sign Up Today
               </Button>
             </RegisterLink>
           </div>

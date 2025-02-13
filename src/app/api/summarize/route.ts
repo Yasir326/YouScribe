@@ -17,10 +17,7 @@ export async function POST(req: Request) {
     const user = await getUser();
 
     if (!user || !user.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { url } = await req.json();
@@ -34,6 +31,7 @@ export async function POST(req: Request) {
       );
     }
 
+    // Get transcript
     let transcript: string;
     try {
       transcript = await getTranscript(videoId);
@@ -52,8 +50,8 @@ export async function POST(req: Request) {
       data: {
         title: content.split('\n')[0],
         content: content,
-        userId: user.id  // Direct reference to userId instead of using connect
-      }
+        userId: user.id, // Direct reference to userId instead of using connect
+      },
     });
 
     // Return the summary data
@@ -87,6 +85,7 @@ async function getTranscript(videoId: string): Promise<string> {
       throw new Error('No transcript available for this video.');
     }
 
+    // Combine all transcript parts into a single string
     const transcript = transcriptArray
       .map((item: { text: string }) => item.text)
       .join(' ');
@@ -98,6 +97,7 @@ async function getTranscript(videoId: string): Promise<string> {
   }
 }
 
+// The generateSummary function remains the same
 async function generateSummary(transcript: string): Promise<string> {
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -133,5 +133,6 @@ ${transcript}`,
   });
 
   const summary = response.choices[0].message?.content || '';
+  console.log('Generated summary:', summary);
   return summary;
 }

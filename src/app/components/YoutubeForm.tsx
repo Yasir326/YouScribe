@@ -4,10 +4,10 @@ import { useState } from "react"
 import { Button } from "@/src/app/components/ui/button"
 import { Input } from "@/src/app/components/ui/input"
 import { useToast } from "@/src/hooks/use-toast"
-import { LoadingAnimation } from "./LoadingAnimation"
 import { ChatComponent } from "./ChatComponent"
 import { motion } from "framer-motion"
 import { Youtube } from "lucide-react"
+import { LoadingAnimation } from './LoadingAnimation'
 
 type Summary = {
   id: string
@@ -108,4 +108,3 @@ export function YoutubeForm({ onSummaryGenerated }: { onSummaryGenerated: (summa
     </div>
   )
 }
-
