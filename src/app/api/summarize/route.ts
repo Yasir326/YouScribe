@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { YoutubeTranscript } from 'youtube-transcript';
 import { PrismaClient } from '@prisma/client';
+import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -12,6 +13,13 @@ const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
   try {
+    const { getUser } = getKindeServerSession();
+    const user = await getUser();
+
+    if (!user || !user.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { url } = await req.json();
 
     // Extract video ID from URL
@@ -37,19 +45,20 @@ export async function POST(req: Request) {
     // Generate summary using OpenAI
     const content = await generateSummary(transcript);
 
+    // Create the summary without specifying the id field
+    await prisma.summary.create({
+      data: {
+        title: content.split('\n')[0],
+        content: content,
+        userId: user.id, // Direct reference to userId instead of using connect
+      },
+    });
+
+    // Return the summary data
     const summary = {
-      id: videoId,
       title: content.split('\n')[0],
       content: content,
     };
-
-    await prisma.summary.create({
-      data: {
-        id: summary.id,
-        title: summary.title,
-        content: summary.content,
-      }
-    })
 
     return NextResponse.json({ summary });
   } catch (error) {
@@ -76,6 +85,7 @@ async function getTranscript(videoId: string): Promise<string> {
       throw new Error('No transcript available for this video.');
     }
 
+    // Combine all transcript parts into a single string
     const transcript = transcriptArray
       .map((item: { text: string }) => item.text)
       .join(' ');
@@ -87,6 +97,7 @@ async function getTranscript(videoId: string): Promise<string> {
   }
 }
 
+// The generateSummary function remains the same
 async function generateSummary(transcript: string): Promise<string> {
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -94,7 +105,7 @@ async function generateSummary(transcript: string): Promise<string> {
       {
         role: 'system',
         content:
-          'You are a helpful assistant that summarizes YouTube video transcripts in detail and provides actionable steps if applicable that the user can take. Format your response in markdown with specific headers and numbering.',
+          'You are a helpful assistant that summarizes YouTube video transcripts in detail highlighting the key points and provides actionable steps if applicable that the user can take. Format your response in markdown with specific headers and numbering. Translate to english if required',
       },
       {
         role: 'user',
@@ -115,11 +126,13 @@ async function generateSummary(transcript: string): Promise<string> {
 ...
 
 Transcript:
+   
 ${transcript}`,
       },
     ],
   });
 
   const summary = response.choices[0].message?.content || '';
+  console.log('Generated summary:', summary);
   return summary;
 }

@@ -3,6 +3,8 @@ import { privateProcedure, publicProcedure, router } from './trpc';
 import { TRPCError } from '@trpc/server';
 import { db } from '../db';
 import { z } from 'zod';
+import { absoluteUrl } from '../lib/utils';
+
 export const appRouter = router({
   authCallback: publicProcedure.query(async () => {
     const { getUser } = getKindeServerSession();
@@ -38,6 +40,22 @@ export const appRouter = router({
         userId,
       },
     });
+  }),
+  
+  createStripeSession: privateProcedure.mutation(async ({ctx}) => {
+    const {userId} = ctx;
+
+    const billingUrl = absoluteUrl('/dashboard/billing');
+
+    if (!userId) throw new TRPCError({ code: 'UNAUTHORIZED' });
+
+    const dbUser = await db.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+
+    if (!dbUser) throw new TRPCError({ code: 'UNAUTHORIZED' });
   }),
 
   getFile: privateProcedure
