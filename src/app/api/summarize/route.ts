@@ -34,7 +34,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Get transcript
     let transcript: string;
     try {
       transcript = await getTranscript(videoId);
@@ -88,7 +87,6 @@ async function getTranscript(videoId: string): Promise<string> {
       throw new Error('No transcript available for this video.');
     }
 
-    // Combine all transcript parts into a single string
     const transcript = transcriptArray
       .map((item: { text: string }) => item.text)
       .join(' ');
@@ -100,7 +98,6 @@ async function getTranscript(videoId: string): Promise<string> {
   }
 }
 
-// The generateSummary function remains the same
 async function generateSummary(transcript: string): Promise<string> {
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -136,6 +133,5 @@ ${transcript}`,
   });
 
   const summary = response.choices[0].message?.content || '';
-  console.log('Generated summary:', summary);
   return summary;
 }
