@@ -12,10 +12,7 @@ export async function POST(req: Request) {
     const user = await getUser();
 
     if (!user || !user.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { message, transcript, summary } = await req.json();
@@ -25,28 +22,27 @@ export async function POST(req: Request) {
       messages: [
         {
           role: 'system',
-          content: `You are a helpful assistant specifically answering questions about a YouTube video's content. 
-          You must ONLY answer questions based on the information provided in the transcript or answer questions related to the theme and topics of the transcript.
-          If the question is not related to the video's content, politely explain that you can only answer questions about the video's content.
-          Do not make assumptions or provide information beyond what is contained in these materials.
+          content: `You are a helpful assistant answering questions about a YouTube video's content. 
+          Use the transcript as your main reference. Answer questions that are directly based on the transcript, as well as questions about the themes, topics, or ideas suggested by the transcript—even if the details are not stated explicitly. 
+          If a question isn't directly in the transcript but relates to its themes, provide an answer based on that connection. However, if a question is completely unrelated to the video's content, explain politely that you can only answer questions about the video's content. Avoid making assumptions or adding details beyond what the transcript and its related themes support.
           
           SUMMARY:
           ${summary}
           
           TRANSCRIPT:
-          ${transcript}`
+          ${transcript}`,
         },
         {
           role: 'user',
-          content: message
-        }
+          content: message,
+        },
       ],
       temperature: 0.7,
-      max_tokens: 500
+      max_tokens: 500,
     });
 
-    return NextResponse.json({ 
-      reply: response.choices[0].message?.content || 'No response generated'
+    return NextResponse.json({
+      reply: response.choices[0].message?.content || 'No response generated',
     });
   } catch (error) {
     console.error('Error processing chat:', error);
@@ -55,4 +51,4 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
-} 
+}

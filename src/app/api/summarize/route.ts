@@ -108,7 +108,7 @@ async function generateSummary(transcript: string): Promise<string> {
       {
         role: 'system',
         content:
-          'You are a helpful assistant that summarizes YouTube video transcripts in detail and provides actionable steps if applicable that the user can take. Format your response in markdown with specific headers and numbering. Translate to english if required',
+          'You are a helpful assistant that summarizes YouTube video transcripts in detail highlighting the key points and provides actionable steps if applicable that the user can take. Format your response in markdown with specific headers and numbering. Translate to english if required',
       },
       {
         role: 'user',

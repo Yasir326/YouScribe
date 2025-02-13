@@ -7,8 +7,8 @@ import { FloatingPaper } from "@/src/app/components/floating-paper"
 import { RoboAnimation } from "@/src/app/components/robo-animation"
 import { SparklesCore } from "@/src/app/components/sparkles"
 import Image from "next/image"
-import Link from "next/link"
 import Navbar from './components/Navbar'
+import { RegisterLink } from '@kinde-oss/kinde-auth-nextjs/components'
 
 export default function Home() {
   return (
@@ -144,14 +144,6 @@ export default function Home() {
         </div>
       </div>
     </main>
-  )
-}
-
-function RegisterLink({ children }: { children: React.ReactNode }) {
-  return (
-    <Link href="/register" className="w-full">
-      {children}
-    </Link>
   )
 }
 
