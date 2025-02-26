@@ -17,7 +17,7 @@ export const pricingItems: PricingItem[] = [
     plan: 'Basic',
     tagline: 'Perfect for getting started.',
     quota: 100,
-    price: 9.99,
+    price: 8.99,
     features: [
       {
         text: '100 video summaries p/m',
@@ -28,6 +28,7 @@ export const pricingItems: PricingItem[] = [
       },
       {
         text: 'Standard quality summaries',
+        footnote: 'Powered by GPT-3.5',
       },
       {
         text: 'Priority support',
@@ -42,11 +43,11 @@ export const pricingItems: PricingItem[] = [
   {
     plan: 'Plus',
     tagline: 'For growing needs.',
-    quota: 500,
-    price: 14.99,
+    quota: 300,
+    price: 19.99,
     features: [
       {
-        text: '500 video summaries p/m',
+        text: '300 video summaries p/m',
         footnote: 'Reset monthly on billing date',
       },
       {
@@ -54,6 +55,7 @@ export const pricingItems: PricingItem[] = [
       },
       {
         text: 'Enhanced quality summaries',
+        footnote: 'Powered by GPT-4 Turbo',
       },
       {
         text: 'Standard support',
@@ -66,18 +68,19 @@ export const pricingItems: PricingItem[] = [
   {
     plan: 'Pro',
     tagline: 'For power users.',
-    quota: 'unlimited',
-    price: 19.99,
+    quota: 700,
+    price: 39.99,
     features: [
       {
-        text: 'Unlimited video summaries',
-        footnote: 'No monthly limits',
+        text: '700 video summaries p/m',
+        footnote: 'Reset monthly on billing date',
       },
       {
         text: 'Mobile-friendly interface',
       },
       {
         text: 'Highest quality summaries',
+        footnote: 'Powered by GPT-4',
       },
       {
         text: 'Priority support',

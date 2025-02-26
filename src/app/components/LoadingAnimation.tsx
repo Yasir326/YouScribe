@@ -124,7 +124,7 @@ export function LoadingAnimation() {
         }
         return prevProgress + 1
       })
-    }, 50) // Adjust speed by changing this value
+    }, 150) // Adjust speed by changing this value
 
     return () => clearInterval(timer)
   }, [])

@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
+import { PrismaClient } from '@prisma/client';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
   try {
@@ -15,10 +18,32 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Get user's subscription tier from database
+    const userSubscription = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: {
+        stripePriceId: true
+      }
+    });
+
+    // Map price IDs to tiers
+    const tier = userSubscription?.stripePriceId ? 
+      (userSubscription.stripePriceId.includes('Pro') ? 'Pro' : 
+       userSubscription.stripePriceId.includes('Plus') ? 'Plus' : 'Basic') 
+      : 'Basic';
+
+    // Select model based on tier
+    const model = 
+      ({
+        Basic: 'gpt-3.5-turbo',
+        Plus: 'gpt-4-turbo-preview',
+        Pro: 'gpt-4o',
+      } as const)[tier as 'Basic' | 'Plus' | 'Pro'] || 'gpt-3.5-turbo';
+
     const { message, transcript, summary } = await req.json();
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: model,
       messages: [
         {
           role: 'system',

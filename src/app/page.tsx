@@ -115,7 +115,12 @@ export default function Home() {
                 </ul>
               </div>
               <div className="relative h-96">
-                <Image src="/youscribe-demo.png" alt="YouScribe Demo" layout="fill" objectFit="contain" />
+                <Image 
+                  src="/youscribe-demo.png" 
+                  alt="YouScribe Demo" 
+                  fill
+                  className="object-contain" 
+                />
               </div>
             </div>
           </div>

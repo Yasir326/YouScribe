@@ -15,6 +15,7 @@ model User {
   stripeSubscriptionID   String?   @unique @map("stripe_subscription_id")
   stripePriceId          String?   @map("stripe_price_id")
   stripeCurrentPeriodEnd DateTime? @map("stripe_current_period_end")
+  openaiApiKey          String?   @map("openai_api_key")
   File                   File[]
   Summary                Summary[]
 }

@@ -5,10 +5,6 @@ import { YoutubeTranscript } from 'youtube-transcript';
 import { PrismaClient } from '@prisma/client';
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
@@ -19,6 +15,27 @@ export async function POST(req: Request) {
     if (!user || !user.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Check if user has configured OpenAI API key
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: {
+        openaiApiKey: true,
+        stripePriceId: true
+      }
+    });
+
+    if (!dbUser?.openaiApiKey) {
+      return NextResponse.json(
+        { error: 'OpenAI API key not configured. Please add your API key in the dashboard settings.' },
+        { status: 400 }
+      );
+    }
+
+    // Initialize OpenAI with user's API key
+    const openai = new OpenAI({
+      apiKey: dbUser.openaiApiKey,
+    });
 
     const { url } = await req.json();
 
@@ -42,15 +59,31 @@ export async function POST(req: Request) {
       );
     }
 
+    // Get user's subscription tier from database
+    const userSubscription = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: {
+        stripePriceId: true
+      }
+    });
+
+    // Map price IDs to tiers
+    const tier = userSubscription?.stripePriceId ? 
+      (userSubscription.stripePriceId.includes('Pro') ? 'Pro' : 
+       userSubscription.stripePriceId.includes('Plus') ? 'Plus' : 'Basic') 
+      : 'Basic';
+
+    console.log('User tier:', tier);
+
     // Generate summary using OpenAI
-    const content = await generateSummary(transcript);
+    const content = await generateSummary(transcript, tier, openai);
 
     // Create the summary without specifying the id field
     await prisma.summary.create({
       data: {
         title: content.split('\n')[0],
         content: content,
-        userId: user.id, // Direct reference to userId instead of using connect
+        userId: user.id,
       },
     });
 
@@ -97,15 +130,25 @@ async function getTranscript(videoId: string): Promise<string> {
   }
 }
 
-// The generateSummary function remains the same
-async function generateSummary(transcript: string): Promise<string> {
+async function generateSummary(
+  transcript: string, 
+  userTier: string, 
+  openai: OpenAI
+): Promise<string> {
+  // Select model based on user tier
+  const model = {
+    'Basic': 'gpt-3.5-turbo',      // Cheapest option
+    'Plus': 'gpt-4o', // Better performance/cost ratio
+    'Pro': 'gpt-4-turbo-preview'                 // Best quality
+  }[userTier] || 'gpt-3.5-turbo';
+
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: model,
     messages: [
       {
         role: 'system',
         content:
-          'You are a helpful assistant that summarizes YouTube video transcripts in detail highlighting the key points and provides actionable steps if applicable that the user can take. Format your response in markdown with specific headers and numbering. Translate to english if required',
+          'You are a helpful assistant that summarizes YouTube video transcripts in detail highlighting the key points and provides actionable steps if applicable that the user can take. Format your response in markdown with specific headers and numbering. Translate to english if required. Do not include words like "Transcript Includes" in your response.',
       },
       {
         role: 'user',
@@ -133,6 +176,7 @@ ${transcript}`,
   });
 
   const summary = response.choices[0].message?.content || '';
+  console.log('User tier:', userTier);
   console.log('Generated summary:', summary);
   return summary;
 }

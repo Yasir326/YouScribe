@@ -6,7 +6,7 @@ import { Input } from "@/src/app/components/ui/input"
 import { useToast } from "@/src/hooks/use-toast"
 import { ChatComponent } from "./ChatComponent"
 import { motion } from "framer-motion"
-import { Youtube } from "lucide-react"
+import { Youtube, Key } from "lucide-react"
 import { LoadingAnimation } from './LoadingAnimation'
 
 type Summary = {
@@ -14,12 +14,27 @@ type Summary = {
   content: string
 }
 
-export function YoutubeForm({ onSummaryGenerated }: { onSummaryGenerated: (summary: Summary) => void }) {
+interface YoutubeFormProps {
+  onSummaryGenerated: (summary: Summary) => void
+  hasApiKey: boolean
+}
+
+export function YoutubeForm({ onSummaryGenerated, hasApiKey }: YoutubeFormProps) {
   const [url, setUrl] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [transcript, setTranscript] = useState("")
   const [summary, setSummary] = useState<Summary | null>(null)
   const { toast } = useToast()
+
+  if (!hasApiKey) {
+    return (
+      <div className="text-center p-6 bg-gray-800 rounded-lg">
+        <Key className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-white mb-2">OpenAI API Key Required</h3>
+        <p className="text-gray-400">Please configure your OpenAI API key in the settings above to use the summarization feature.</p>
+      </div>
+    )
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

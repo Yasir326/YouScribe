@@ -9,7 +9,11 @@ type Summary = {
   content: string
 }
 
-export default function DashboardClient() {
+interface DashboardClientProps {
+  hasApiKey: boolean
+}
+
+export default function DashboardClient({ hasApiKey }: DashboardClientProps) {
   const [summary, setSummary] = useState<Summary | null>(null)
 
   const handleSummaryGenerated = (newSummary: Summary) => {
@@ -19,7 +23,7 @@ export default function DashboardClient() {
 
   return (
     <div>
-      <YoutubeForm onSummaryGenerated={handleSummaryGenerated} />
+      <YoutubeForm onSummaryGenerated={handleSummaryGenerated} hasApiKey={hasApiKey} />
       <SummaryDisplay summary={summary} />
     </div>
   )

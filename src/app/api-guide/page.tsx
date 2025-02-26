@@ -1,11 +1,8 @@
-import PricingClient from './PricingClient'
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
+import ApiGuideClient from './ApiGuideClient'
 
-const PricingPage = async () => {
+export default async function ApiGuide() {
   const { getUser } = getKindeServerSession()
   const user = await getUser()
-
-  return <PricingClient user={user} />
+  return <ApiGuideClient user={user} />
 }
-
-export default PricingPage
