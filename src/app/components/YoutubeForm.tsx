@@ -28,10 +28,10 @@ export function YoutubeForm({ onSummaryGenerated, hasApiKey }: YoutubeFormProps)
 
   if (!hasApiKey) {
     return (
-      <div className="text-center p-6 bg-gray-800 rounded-lg">
-        <Key className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-white mb-2">OpenAI API Key Required</h3>
-        <p className="text-gray-400">Please configure your OpenAI API key in the settings above to use the summarization feature.</p>
+      <div className="text-center p-4 sm:p-6 bg-gray-800 rounded-lg">
+        <Key className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+        <h3 className="text-base sm:text-lg font-semibold text-white mb-2">OpenAI API Key Required</h3>
+        <p className="text-sm sm:text-base text-gray-400">Please configure your OpenAI API key in the settings above to use the summarization feature.</p>
       </div>
     )
   }
@@ -74,7 +74,7 @@ export function YoutubeForm({ onSummaryGenerated, hasApiKey }: YoutubeFormProps)
   }
 
   return (
-    <div className="space-y-6 bg-black/[0.96] antialiased bg-grid-white/[0.02] relative overflow-hidden p-6 rounded-lg">
+    <div className="space-y-4 sm:space-y-6 bg-black/[0.96] antialiased bg-grid-white/[0.02] relative overflow-hidden p-4 sm:p-6 rounded-lg">
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           type="url"
@@ -89,7 +89,7 @@ export function YoutubeForm({ onSummaryGenerated, hasApiKey }: YoutubeFormProps)
             <LoadingAnimation />
           ) : (
             <Button type="submit" className="bg-purple-600 hover:bg-purple-700 text-white">
-              <Youtube className="mr-2 h-5 w-5" />
+              <Youtube className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
               Summarize
             </Button>
           )}
@@ -101,21 +101,22 @@ export function YoutubeForm({ onSummaryGenerated, hasApiKey }: YoutubeFormProps)
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex flex-col md:flex-row mt-8 gap-4"
+          className="flex flex-col mt-6 sm:mt-8 gap-4"
         >
-          <div className="w-full md:w-1/2 bg-gray-800 rounded-lg p-4 max-h-96 overflow-y-auto">
-            <iframe
-              width="100%"
-              height="315"
-              src={`https://www.youtube.com/embed/${extractVideoId(url)}`}
-              title="YouTube video player"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            ></iframe>
+          <div className="w-full bg-gray-800 rounded-lg p-3 sm:p-4">
+            <div className="relative pb-[56.25%] h-0 overflow-hidden rounded">
+              <iframe
+                className="absolute top-0 left-0 w-full h-full"
+                src={`https://www.youtube.com/embed/${extractVideoId(url)}`}
+                title="YouTube video player"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+            </div>
           </div>
 
-          <div className="w-full md:w-1/2">
+          <div className="w-full">
             <ChatComponent summary={summary.content} transcript={transcript} />
           </div>
         </motion.div>

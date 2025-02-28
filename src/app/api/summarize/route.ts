@@ -118,7 +118,7 @@ async function getTranscript(videoId: string): Promise<string> {
       throw new Error('No transcript available for this video.');
     }
 
-    // Combine all transcript parts into a single string
+   
     const transcript = transcriptArray
       .map((item: { text: string }) => item.text)
       .join(' ');
@@ -135,11 +135,10 @@ async function generateSummary(
   userTier: string, 
   openai: OpenAI
 ): Promise<string> {
-  // Select model based on user tier
   const model = {
-    'Basic': 'gpt-3.5-turbo',      // Cheapest option
-    'Plus': 'gpt-4o', // Better performance/cost ratio
-    'Pro': 'gpt-4-turbo-preview'                 // Best quality
+    'Basic': 'gpt-3.5-turbo',
+    'Plus': 'gpt-4o',
+    'Pro': 'gpt-4-turbo-preview'
   }[userTier] || 'gpt-3.5-turbo';
 
   const response = await openai.chat.completions.create({
@@ -148,11 +147,11 @@ async function generateSummary(
       {
         role: 'system',
         content:
-          'You are a helpful assistant that summarizes YouTube video transcripts in detail highlighting the key points and provides actionable steps if applicable that the user can take. Format your response in markdown with specific headers and numbering. Translate to english if required. Do not include words like "Transcript Includes" in your response.',
+          'You are a helpful assistant that summarizes YouTube video transcripts in detail highlighting the key points and provides actionable steps if applicable that the user can take. Format your response in markdown with specific headers and numbering. ALWAYS OUTPUT IN ENGLISH regardless of the input language. Translate the transcript to English if it is in another language. Do not include words like "Transcript Includes" in your response.',
       },
       {
         role: 'user',
-        content: `Summarize the following transcript and provide actionable steps if applicable in detail with relevant examples. Use the following markdown format, use suitable emojis alongside the action steps and title:
+        content: `Summarize the following transcript and provide actionable steps if applicable in detail with relevant examples. ALWAYS WRITE YOUR RESPONSE IN ENGLISH, even if the transcript is in another language. Use the following markdown format, use suitable emojis alongside the action steps and title:
       :
 
 ## Title:

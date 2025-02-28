@@ -3,9 +3,6 @@ import { redirect } from 'next/navigation';
 import { db } from '../../db';
 import DashboardClient from './dashboard-client';
 import NavbarLoggedIn from '../components/NavbarLoggedIn';
-import Link from 'next/link';
-import { Button } from '../components/ui/button';
-import { Settings } from 'lucide-react';
 
 export default async function DashboardPage() {
   const { getUser } = getKindeServerSession();
@@ -29,19 +26,13 @@ export default async function DashboardPage() {
   if (!dbUser) redirect('/auth-callback?origin=dashboard');
 
   return (
-    <div className='min-h-screen bg-black/[0.96] antialiased bg-grid-white/[0.02]'>
+    <div className="min-h-screen flex flex-col">
       <NavbarLoggedIn />
-      <main className='container mx-auto px-4 py-8'>
-        <div className="flex justify-between items-center mb-8">
-          <h1 className='text-3xl font-bold text-white text-center justify-center'>
+      <main className='container mx-auto px-4 py-6 md:py-8 flex-grow'>
+        <div className="flex justify-center items-center mb-6 md:mb-8">
+          <h1 className='text-2xl md:text-3xl font-bold text-white text-center'>
             {user.given_name ? `${user.given_name}'s Dashboard` : 'Your Dashboard'}
           </h1>
-          <Link href="/settings">
-            <Button variant="outline" className="text-gray-300 hover:text-white">
-              <Settings className="w-4 h-4 mr-2" />
-              API Settings
-            </Button>
-          </Link>
         </div>
 
         <DashboardClient hasApiKey={!!dbUser.openaiApiKey} />

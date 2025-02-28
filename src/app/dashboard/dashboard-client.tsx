@@ -22,9 +22,13 @@ export default function DashboardClient({ hasApiKey }: DashboardClientProps) {
   }
 
   return (
-    <div>
-      <YoutubeForm onSummaryGenerated={handleSummaryGenerated} hasApiKey={hasApiKey} />
-      <SummaryDisplay summary={summary} />
+    <div className="flex flex-col w-full max-w-4xl mx-auto space-y-6 md:space-y-8">
+      <div className="w-full px-2 sm:px-4">
+        <YoutubeForm onSummaryGenerated={handleSummaryGenerated} hasApiKey={hasApiKey} />
+      </div>
+      <div className="w-full px-2 sm:px-4">
+        <SummaryDisplay summary={summary} />
+      </div>
     </div>
   )
 }

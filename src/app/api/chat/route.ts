@@ -18,7 +18,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get user's subscription tier from database
     const userSubscription = await prisma.user.findUnique({
       where: { id: user.id },
       select: {
