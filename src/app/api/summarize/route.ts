@@ -37,7 +37,7 @@ export async function POST(req: Request) {
       apiKey: dbUser.openaiApiKey,
     });
 
-    const { url } = await req.json();
+    const { url, quickMode } = await req.json();
 
     // Extract video ID from URL
     const videoId = extractVideoId(url);
@@ -74,9 +74,10 @@ export async function POST(req: Request) {
       : 'Basic';
 
     console.log('User tier:', tier);
+    console.log('Quick mode:', quickMode ? 'enabled' : 'disabled');
 
     // Generate summary using OpenAI
-    const content = await generateSummary(transcript, tier, openai);
+    const content = await generateSummary(transcript, tier, openai, quickMode);
 
     // Create the summary without specifying the id field
     await prisma.summary.create({
@@ -89,11 +90,11 @@ export async function POST(req: Request) {
 
     // Return the summary data
     const summary = {
-      title: content.split('\n')[0],
+      id: Date.now().toString(), // Generate a temporary ID
       content: content,
     };
 
-    return NextResponse.json({ summary });
+    return NextResponse.json({ summary, transcript });
   } catch (error) {
     console.error('Error processing request:', error);
     return NextResponse.json(
@@ -133,26 +134,74 @@ async function getTranscript(videoId: string): Promise<string> {
 async function generateSummary(
   transcript: string, 
   userTier: string, 
-  openai: OpenAI
+  openai: OpenAI,
+  quickMode: boolean = false
 ): Promise<string> {
-  const model = {
-    'Basic': 'gpt-3.5-turbo',
-    'Plus': 'gpt-4o',
-    'Pro': 'gpt-4-turbo-preview'
-  }[userTier] || 'gpt-3.5-turbo';
+  const modelsByTier = {
+    'Basic': ['gpt-3.5-turbo'],
+    'Plus': ['gpt-4o-mini', 'gpt-3.5-turbo'],
+    'Pro': ['gpt-4-turbo', 'gpt-4', 'gpt-4-0613', 'gpt-3.5-turbo']
+  };
 
-  const response = await openai.chat.completions.create({
-    model: model,
-    messages: [
-      {
-        role: 'system',
-        content:
-          'You are a helpful assistant that summarizes YouTube video transcripts in detail highlighting the key points and provides actionable steps if applicable that the user can take. Format your response in markdown with specific headers and numbering. ALWAYS OUTPUT IN ENGLISH regardless of the input language. Translate the transcript to English if it is in another language. Do not include words like "Transcript Includes" in your response.',
-      },
-      {
-        role: 'user',
-        content: `Summarize the following transcript and provide actionable steps if applicable in detail with relevant examples. ALWAYS WRITE YOUR RESPONSE IN ENGLISH, even if the transcript is in another language. Use the following markdown format, use suitable emojis alongside the action steps and title:
-      :
+  // In quick mode, prefer faster models
+  const modelOptions = quickMode 
+    ? ['gpt-3.5-turbo'] 
+    : (modelsByTier[userTier as keyof typeof modelsByTier] || ['gpt-3.5-turbo']);
+  
+  const modelTokenLimits = {
+    'gpt-4-turbo': 25000,
+    'gpt-4': 7000,
+    'gpt-4-0613': 7000,
+    'gpt-4o-mini': 15000,
+    'gpt-3.5-turbo': 12000
+  };
+  
+  // System and prompt tokens (approximate)
+  const systemAndPromptTokens = 500;
+  
+  let lastError = null;
+  
+  for (const model of modelOptions) {
+    try {
+      const maxTokenLimit = modelTokenLimits[model as keyof typeof modelTokenLimits] || 4000;
+      const availableTokensForTranscript = maxTokenLimit - systemAndPromptTokens;
+      
+      // In quick mode, use a smaller portion of the transcript
+      const estimatedTranscriptTokens = Math.ceil(transcript.length / 4);
+      
+      let processedTranscript = transcript;
+      if (estimatedTranscriptTokens > availableTokensForTranscript || quickMode) {
+        // For quick mode, use an even smaller portion
+        const truncationRatio = quickMode 
+          ? Math.min(0.5, availableTokensForTranscript / estimatedTranscriptTokens) 
+          : availableTokensForTranscript / estimatedTranscriptTokens;
+        
+        const charsToKeep = Math.floor(transcript.length * truncationRatio * 0.9); // 10% safety margin
+        processedTranscript = transcript.substring(0, charsToKeep) + 
+          "\n\n[Transcript truncated due to length limitations]";
+        console.log(`Truncated transcript from ${transcript.length} to ${processedTranscript.length} characters`);
+      }
+      
+      const promptContent = quickMode
+        ? `Provide a concise summary of the following transcript. Include the main points and brief action steps if applicable. Use markdown format with a title, summary section, and short action steps. Use emojis for the title and action steps. ALWAYS WRITE IN ENGLISH:
+
+## Title:
+
+## Summary:
+
+[Your concise summary here]
+
+## Quick Action Steps:
+
+1. [First action]
+2. [Second action]
+3. [Third action]
+
+Transcript:
+       
+${processedTranscript}`
+        : `Summarize the following transcript and provide actionable steps if applicable in detail with relevant examples. ALWAYS WRITE YOUR RESPONSE IN ENGLISH, even if the transcript is in another language. Use the following markdown format, use suitable emojis alongside the action steps and title:
+          :
 
 ## Title:
 
@@ -168,14 +217,54 @@ async function generateSummary(
 ...
 
 Transcript:
-   
-${transcript}`,
-      },
-    ],
-  });
+       
+${processedTranscript}`;
 
-  const summary = response.choices[0].message?.content || '';
-  console.log('User tier:', userTier);
-  console.log('Generated summary:', summary);
-  return summary;
+      const response = await openai.chat.completions.create({
+        model: model,
+        messages: [
+          {
+            role: 'system',
+            content: quickMode
+              ? 'You are a helpful assistant that provides brief, concise summaries of YouTube video transcripts. Format your response in markdown with a title, summary section, and brief action steps. Use emojis where appropriate. Keep everything concise but informative. ALWAYS OUTPUT IN ENGLISH.'
+              : 'You are a helpful assistant that summarizes YouTube video transcripts in detail highlighting the key points and provides actionable steps if applicable that the user can take. Format your response in markdown with specific headers and numbering. ALWAYS OUTPUT IN ENGLISH regardless of the input language. Translate the transcript to English if it is in another language. Do not include words like "Transcript Includes" in your response.',
+          },
+          {
+            role: 'user',
+            content: promptContent,
+          },
+        ],
+      });
+
+      const summary = response.choices[0].message?.content || '';
+      console.log('Successfully used model:', model);
+      console.log('User tier:', userTier);
+      console.log('Quick mode:', quickMode ? 'enabled' : 'disabled');
+      return summary;
+      
+    } catch (error: any) {
+      console.error(`Error with model ${model}:`, error.message);
+      lastError = error;
+      
+      // Check for different types of rate limit errors
+      const isRateLimitError = 
+        error.message.includes('rate_limit_exceeded') || 
+        error.message.includes('capacity') ||
+        error.message.includes('Request too large') ||
+        error.message.includes('tokens per min') ||
+        error.message.includes('TPM');
+      
+      if (!isRateLimitError) {
+        throw error;
+      }
+      
+      if (model === modelOptions[modelOptions.length - 1]) {
+        throw new Error(`All available models are rate limited or exceeded token limits. Please try again later. Last error: ${error.message}`);
+      }
+      
+      console.log(`Issue with model ${model}, trying next model...`);
+    }
+  }
+  
+  throw lastError || new Error('Failed to generate summary with any available model');
 }

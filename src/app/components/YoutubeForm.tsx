@@ -5,9 +5,10 @@ import { Button } from "@/src/app/components/ui/button"
 import { Input } from "@/src/app/components/ui/input"
 import { useToast } from "@/src/hooks/use-toast"
 import { ChatComponent } from "./ChatComponent"
-import { motion } from "framer-motion"
-import { Youtube, Key } from "lucide-react"
+import { Youtube, Key, Zap, Clock } from "lucide-react"
 import { LoadingAnimation } from './LoadingAnimation'
+import { Switch } from "@/src/app/components/ui/switch"
+import { Label } from "@/src/app/components/ui/label"
 
 type Summary = {
   id: string
@@ -24,6 +25,7 @@ export function YoutubeForm({ onSummaryGenerated, hasApiKey }: YoutubeFormProps)
   const [isLoading, setIsLoading] = useState(false)
   const [transcript, setTranscript] = useState("")
   const [summary, setSummary] = useState<Summary | null>(null)
+  const [quickMode, setQuickMode] = useState(false)
   const { toast } = useToast()
 
   if (!hasApiKey) {
@@ -44,7 +46,7 @@ export function YoutubeForm({ onSummaryGenerated, hasApiKey }: YoutubeFormProps)
       const response = await fetch("/api/summarize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url, quickMode }),
       })
 
       if (!response.ok) {
@@ -84,7 +86,23 @@ export function YoutubeForm({ onSummaryGenerated, hasApiKey }: YoutubeFormProps)
           required
           className="bg-gray-800 text-white border-gray-700 focus:border-purple-500"
         />
-        <div className="flex justify-center">
+        
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="quick-mode"
+              checked={quickMode}
+              onCheckedChange={setQuickMode}
+            />
+            <Label htmlFor="quick-mode" className="text-white flex items-center">
+              {quickMode ? (
+                <><Zap className="h-4 w-4 mr-1 text-yellow-400" /> Quick Summary</>
+              ) : (
+                <><Clock className="h-4 w-4 mr-1 text-blue-400" /> Detailed Summary</>
+              )}
+            </Label>
+          </div>
+          
           {isLoading ? (
             <LoadingAnimation />
           ) : (
@@ -97,12 +115,7 @@ export function YoutubeForm({ onSummaryGenerated, hasApiKey }: YoutubeFormProps)
       </form>
 
       {summary && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="flex flex-col mt-6 sm:mt-8 gap-4"
-        >
+        <div className="space-y-4">
           <div className="w-full bg-gray-800 rounded-lg p-3 sm:p-4">
             <div className="relative pb-[56.25%] h-0 overflow-hidden rounded">
               <iframe
@@ -115,11 +128,10 @@ export function YoutubeForm({ onSummaryGenerated, hasApiKey }: YoutubeFormProps)
               ></iframe>
             </div>
           </div>
-
           <div className="w-full">
             <ChatComponent summary={summary.content} transcript={transcript} />
           </div>
-        </motion.div>
+        </div>
       )}
     </div>
   )

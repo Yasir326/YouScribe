@@ -20,7 +20,7 @@ const HowItWorksClient = ({ user }: HowItWorksClientProps) => {
           <h1 className='text-4xl md:text-6xl font-bold text-white mb-6'>
             How{' '}
             <span className='text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600'>
-              YouScribe
+              YouLearnNow
             </span>{' '}
             Works
           </h1>
@@ -40,7 +40,7 @@ const HowItWorksClient = ({ user }: HowItWorksClientProps) => {
               1. Paste YouTube URL
             </h3>
             <p className='text-gray-400'>
-              Simply paste any YouTube video URL into YouScribe. Our system will
+              Simply paste any YouTube video URL into YouLearnNow. Our system will
               process the video and extract its content.
             </p>
           </div>
@@ -113,7 +113,7 @@ const HowItWorksClient = ({ user }: HowItWorksClientProps) => {
             <div className='bg-gray-800/50 backdrop-blur-sm p-4 rounded-lg'>
               <Image
                 src='/images/summary.png'
-                alt='YouScribe Summary Example'
+                alt='YouLearnNow Summary Example'
                 width={800}
                 height={600}
                 className='w-full rounded-lg'
@@ -130,7 +130,7 @@ const HowItWorksClient = ({ user }: HowItWorksClientProps) => {
           <div className='bg-gray-800/50 backdrop-blur-sm p-4 rounded-lg'>
             <Image
               src='/images/dashboard.png'
-              alt='YouScribe Dashboard'
+              alt='YouLearnNow Dashboard'
               width={1200}
               height={675}
               className='w-full rounded-lg'
@@ -150,7 +150,7 @@ const HowItWorksClient = ({ user }: HowItWorksClientProps) => {
           <div className='bg-gray-800/50 backdrop-blur-sm p-8 rounded-lg max-w-3xl mx-auto'>
             <Image
               src='/images/chat.png'
-              alt='YouScribe AI Chat Example'
+              alt='YouLearnNow AI Chat Example'
               width={800}
               height={400}
               className='w-full rounded-lg mb-6'

@@ -6,6 +6,7 @@ import { Button } from "@/src/app/components/ui/button"
 import { useToast } from "@/src/hooks/use-toast"
 import { motion } from "framer-motion"
 import { Send } from "lucide-react"
+import ReactMarkdown from 'react-markdown'
 
 type Message = {
   role: "user" | "assistant"
@@ -82,7 +83,13 @@ export function ChatComponent({ summary, transcript }: ChatComponentProps) {
                 msg.role === "user" ? "bg-purple-600 text-white" : "bg-gray-700 text-gray-200"
               }`}
             >
-              {msg.content}
+              {msg.role === "assistant" ? (
+                <ReactMarkdown className="prose prose-invert max-w-none">
+                  {msg.content}
+                </ReactMarkdown>
+              ) : (
+                msg.content
+              )}
             </div>
           </motion.div>
         ))}

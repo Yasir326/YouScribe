@@ -37,7 +37,7 @@ export default function HomePageClient({ user }: HomePageClientProps) {
           <div className="max-w-4xl mx-auto text-center pt-20 pb-16">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
               <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
-                YouScribe:
+                You Learn Now:
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
                   {" "}
                   Absorb YouTube Knowledge Faster
@@ -73,12 +73,12 @@ export default function HomePageClient({ user }: HomePageClientProps) {
         {/* Features Section */}
         <section className="py-20 bg-gray-900/50 backdrop-blur-sm">
           <div className="container mx-auto px-6">
-            <h2 className="text-3xl font-bold text-white mb-12 text-center">How YouScribe Works</h2>
+            <h2 className="text-3xl font-bold text-white mb-12 text-center">How You Learn Now Works</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <FeatureCard
                 icon={<Youtube className="w-8 h-8 text-purple-400" />}
                 title="Find a Video"
-                description="Paste any YouTube URL into YouScribe"
+                description="Paste any YouTube URL into YouLearnNow"
               />
               <FeatureCard
                 icon={<Sparkles className="w-8 h-8 text-purple-400" />}
@@ -101,7 +101,7 @@ export default function HomePageClient({ user }: HomePageClientProps) {
               <div>
                 <h2 className="text-3xl font-bold text-white mb-4">Learn Smarter, Not Harder</h2>
                 <p className="text-gray-400 text-lg mb-6">
-                  YouScribe transforms YouTube videos into interactive learning experiences. Dive deeper into content,
+                  YouLearnNow transforms YouTube videos into interactive learning experiences. Dive deeper into content,
                   retain information better, and accelerate your learning journey.
                 </p>
                 <ul className="space-y-2 text-gray-300">
@@ -121,8 +121,8 @@ export default function HomePageClient({ user }: HomePageClientProps) {
               </div>
               {/* <div className="relative h-96">
                 <Image 
-                  src="/youscribe-demo.png" 
-                  alt="YouScribe Demo" 
+                  src="/YouLearnNow-demo.png" 
+                  alt="YouLearnNow Demo" 
                   fill
                   className="object-contain" 
                 />

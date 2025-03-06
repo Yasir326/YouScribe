@@ -55,8 +55,8 @@ Ensure responsive design for various screen sizes
 Implement proper error handling throughout the application
 
 
-YOUSCRIBE
-└── youscribe
+YouLearnNow
+└── YouLearnNow
     └── app
         ├── fonts
         │   ├── GeistMonoVF.woff

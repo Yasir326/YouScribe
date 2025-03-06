@@ -41,7 +41,7 @@ export default function NavbarLoggedIn() {
     >
       <Link href='/' className='flex items-center space-x-2'>
         <Youtube className='w-8 h-8 text-purple-500' />
-        <span className='text-white font-medium text-xl'>YouScribe</span>
+        <span className='text-white font-medium text-xl'>YouLearnNow</span>
       </Link>
 
       <div className='hidden md:flex justify-center space-x-6'>

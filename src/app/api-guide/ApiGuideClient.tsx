@@ -12,7 +12,7 @@ import { KindeUser } from '@kinde-oss/kinde-auth-nextjs/types'
 import Navbar from '../components/Navbar'
 import NavbarLoggedIn from '../components/NavbarLoggedIn'
 
-const codeExample = `curl -X GET https://api.youscribe.com/v1/balance \\
+const codeExample = `curl -X GET https://api.YouLearnNow.com/v1/balance \\
 -H "Authorization: Bearer YOUR_API_TOKEN" \\
 -H "Content-Type: application/json"`
 
@@ -63,7 +63,7 @@ const ApiGuideClient = ({ user }: ApiGuideClientProps) => {
           >
             <h1 className="text-4xl font-bold text-white mb-6">API Configuration Guide</h1>
             <p className="text-gray-400 text-lg mb-12">
-              Learn how to set up your API tokens and manage your account balance for YouScribe&apos;s features.
+              Learn how to set up your API tokens and manage your account balance for YouLearnNow&apos;s features.
             </p>
 
             <div className="space-y-8">
@@ -87,14 +87,14 @@ const ApiGuideClient = ({ user }: ApiGuideClientProps) => {
                     <li>Visit <Link href="https://platform.openai.com/api-keys" className="text-purple-400 hover:underline">OpenAI API Keys</Link></li>
                     <li>Sign in or create an OpenAI account</li>
                     <li>Click &quot;Create new secret key&quot;</li>
-                    <li>Name your key (e.g., &quot;YouScribe Integration&quot;)</li>
+                    <li>Name your key (e.g., &quot;YouLearnNow Integration&quot;)</li>
                     <li>Copy and save your API key securely</li>
                     <li>Add payment method in OpenAI dashboard</li>
                   </ol>
                 </CardContent>
               </Card>
 
-              {/* Step 2 - YouScribe Token (existing card with updated title) */}
+              {/* Step 2 - YouLearnNow Token (existing card with updated title) */}
               <Card className="bg-gray-900 border-2 border-gray-800">
                 <CardHeader>
                   <div className="flex items-center space-x-4">
@@ -102,9 +102,9 @@ const ApiGuideClient = ({ user }: ApiGuideClientProps) => {
                       <Lock className="h-6 w-6 text-purple-400" />
                     </div>
                     <div>
-                      <CardTitle className="text-white text-xl">2. Configure YouScribe</CardTitle>
+                      <CardTitle className="text-white text-xl">2. Configure YouLearnNow</CardTitle>
                       <CardDescription className="text-gray-400">
-                        Set up your OpenAI key in YouScribe dashboard
+                        Set up your OpenAI key in YouLearnNow dashboard
                       </CardDescription>
                     </div>
                   </div>
@@ -147,7 +147,7 @@ const ApiGuideClient = ({ user }: ApiGuideClientProps) => {
                     </Button>
                   </div>
                   <p className="text-sm text-gray-400 mt-4">
-                    You can also view your balance and usage history in the YouScribe dashboard under &quot;Usage & Billing&quot;
+                    You can also view your balance and usage history in the YouLearnNow dashboard under &quot;Usage & Billing&quot;
                   </p>
                 </CardContent>
               </Card>

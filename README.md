@@ -1,10 +1,10 @@
-# Youscribe 📺✍️
+# YouLearnNow 📺✍️
 
 <!-- <p align="center">
-  <img src="assets/youscribe-logo.png" alt="Youscribe Logo" width="200"/>
+  <img src="assets/YouLearnNow-logo.png" alt="YouLearnNow Logo" width="200"/>
 </p> -->
 
-Youscribe is a powerful tool that transforms YouTube videos into actionable insights and comprehensive summaries. Whether you're a busy professional, a student, or just someone who loves to learn efficiently, Youscribe is your go-to solution for extracting valuable information from video content.
+YouLearnNow is a powerful tool that transforms YouTube videos into actionable insights and comprehensive summaries. Whether you're a busy professional, a student, or just someone who loves to learn efficiently, YouLearnNow is your go-to solution for extracting valuable information from video content.
 
 ## 🚀 Features
 
@@ -28,7 +28,7 @@ Youscribe is a powerful tool that transforms YouTube videos into actionable insi
 
 ## 🏗️ Architecture
 
-Youscribe follows a monolithic architecture with modular components:
+YouLearnNow follows a monolithic architecture with modular components:
 
 - **Auth Module**: Integrates with Kinde for user registration, login, and token management.
 - **Transcript Module**: Fetches and processes YouTube video transcripts.
@@ -50,12 +50,12 @@ Youscribe follows a monolithic architecture with modular components:
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/youscribe.git
+   git clone https://github.com/yourusername/YouLearnNow.git
    ```
 
 2. Navigate to the project directory:
    ```
-   cd youscribe
+   cd YouLearnNow
    ```
 
 3. Install dependencies:
