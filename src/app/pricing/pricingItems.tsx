@@ -40,6 +40,10 @@ export const pricingItems: PricingItem[] = [
         text: 'Unlimited video length',
         negative: true,
       },
+      {
+        text: 'Use your own OpenAI API key',
+        footnote: 'Bring your own API key for additional cost savings',
+      },
     ],
   },
   {
@@ -65,6 +69,10 @@ export const pricingItems: PricingItem[] = [
       },
       {
         text: 'Extended video length support',
+      },
+      {
+        text: 'Use your own OpenAI API key',
+        footnote: 'Bring your own API key for additional cost savings',
       },
     ],
   },
@@ -95,6 +103,10 @@ export const pricingItems: PricingItem[] = [
       {
         text: 'OpenAI API key configuration',
         footnote: 'Use your own API key for maximum control',
+      },
+      {
+        text: 'Use your own OpenAI API key',
+        footnote: 'Bring your own API key for additional cost savings',
       },
     ],
   },

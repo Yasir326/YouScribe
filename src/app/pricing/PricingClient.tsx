@@ -9,7 +9,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/src/app/components/ui/tooltip';
-import { ArrowRight, Check, HelpCircle, Minus } from 'lucide-react';
+import { ArrowRight, Check, HelpCircle, Minus, Info } from 'lucide-react';
 import { buttonVariants } from '@/src/app/components/ui/button';
 import Navbar from '@/src/app/components/Navbar';
 import { motion } from 'framer-motion';
@@ -50,6 +50,23 @@ const PricingClient = ({ user }: PricingClientProps) => {
           >
             Simple one-time payment. No subscriptions. No hidden fees.
           </motion.p>
+          <motion.div
+            className='mt-4 flex items-center justify-center gap-2 text-gray-400'
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <Info className="h-5 w-5 text-blue-500" />
+            <p className='text-sm'>
+              This app requires your OpenAI API key to function.{' '}
+              <Link 
+                href="/api-guide" 
+                className="text-blue-500 hover:text-blue-400 underline"
+              >
+                Learn how to set up your API key
+              </Link>
+            </p>
+          </motion.div>
         </div>
 
         <div className='pt-12 grid grid-cols-1 gap-10 lg:grid-cols-3'>
@@ -165,6 +182,35 @@ const PricingClient = ({ user }: PricingClientProps) => {
               )
             )}
           </TooltipProvider>
+        </div>
+
+        <div className='mt-8 text-center'>
+          <motion.div
+            className='p-6 bg-gray-900 rounded-lg inline-block max-w-2xl'
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <h3 className='text-white text-lg font-semibold mb-3'>🔑 Important: API Key Required</h3>
+            <p className='text-gray-400 text-sm mb-4'>
+              YouScribe requires an OpenAI API key to generate summaries. This gives you:
+            </p>
+            <ul className='text-sm text-gray-400 space-y-2 mb-4'>
+              <li>• Complete control over your API usage and costs</li>
+              <li>• Direct billing relationship with OpenAI</li>
+              <li>• Ability to use your existing OpenAI API credits</li>
+            </ul>
+            <Link 
+              href="/api-guide"
+              className={buttonVariants({
+                variant: 'outline',
+                size: 'sm',
+              })}
+            >
+              View API Setup Guide
+              <ArrowRight className='h-4 w-4 ml-1.5' />
+            </Link>
+          </motion.div>
         </div>
       </MaxWidthWrapper>
     </div>
