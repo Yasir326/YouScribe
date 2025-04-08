@@ -3,6 +3,9 @@ import { redirect } from 'next/navigation';
 import { db } from '../../db';
 import NavbarLoggedIn from '../components/NavbarLoggedIn';
 import ApiKeyForm from '../dashboard/apiKeyForm';
+import { Info, CreditCard } from 'lucide-react';
+import Link from 'next/link';
+import TokenBalanceChecker from '../components/TokenBalanceChecker';
 
 export default async function SettingsPage() {
   const { getUser } = getKindeServerSession();
@@ -31,11 +34,35 @@ export default async function SettingsPage() {
       <main className='container mx-auto px-4 py-8'>
         <h1 className='text-3xl font-bold mb-8 text-white text-center'>API Settings</h1>
         
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto space-y-6">
           <div className="p-6 bg-gray-900 rounded-lg border-2 border-gray-800">
             <h2 className="text-xl font-semibold text-white mb-6">OpenAI API Configuration</h2>
             <ApiKeyForm hasExistingKey={!!dbUser.openaiApiKey} />
           </div>
+          
+          {dbUser.openaiApiKey && (
+            <div className="p-6 bg-gray-900 rounded-lg border-2 border-gray-800">
+              <h2 className="text-xl font-semibold text-white mb-6 flex items-center">
+                <CreditCard className="w-5 h-5 mr-2 text-purple-400" />
+                OpenAI API Balance
+              </h2>
+              <p className="text-gray-400 mb-4">
+                Check your current OpenAI API token balance and usage. This helps you monitor your spending and ensure you have sufficient credits.
+              </p>
+              <TokenBalanceChecker apiKey={dbUser.openaiApiKey} />
+            </div>
+          )}
+        </div>
+        
+        {/* API Guide Link */}
+        <div className="mt-8 text-center">
+          <Link 
+            href="/api-guide" 
+            className="inline-flex items-center text-purple-400 hover:text-purple-300 transition-colors"
+          >
+            <Info className="w-4 h-4 mr-2" />
+            <span>Need help configuring your OpenAI API key? Check our API Guide</span>
+          </Link>
         </div>
       </main>
     </div>

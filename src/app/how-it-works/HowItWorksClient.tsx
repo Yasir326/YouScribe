@@ -1,10 +1,10 @@
 import { Button } from '@/src/app/components/ui/button';
-import { Youtube, MessageSquare, FileText, Sparkles } from 'lucide-react';
+import { Youtube, MessageSquare, FileText, Sparkles, Zap, Clock } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link';
 import Navbar from '../components/Navbar';
 import NavbarLoggedIn from '../components/NavbarLoggedIn';
 import { KindeUser } from '@kinde-oss/kinde-auth-nextjs/types';
+import { RegisterLink } from '@kinde-oss/kinde-auth-nextjs/server';
 
 interface HowItWorksClientProps {
   user: KindeUser<Record<string, unknown>>
@@ -20,7 +20,7 @@ const HowItWorksClient = ({ user }: HowItWorksClientProps) => {
           <h1 className='text-4xl md:text-6xl font-bold text-white mb-6'>
             How{' '}
             <span className='text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600'>
-              YouLearnNow
+              You Learn Now
             </span>{' '}
             Works
           </h1>
@@ -40,7 +40,7 @@ const HowItWorksClient = ({ user }: HowItWorksClientProps) => {
               1. Paste YouTube URL
             </h3>
             <p className='text-gray-400'>
-              Simply paste any YouTube video URL into YouLearnNow. Our system will
+              Simply paste any YouTube video URL into You Learn Now. Our system will
               process the video and extract its content.
             </p>
           </div>
@@ -122,6 +122,54 @@ const HowItWorksClient = ({ user }: HowItWorksClientProps) => {
           </div>
         </div>
 
+        {/* Summary Mode Section - NEW */}
+        <div className='mb-20'>
+          <h2 className='text-3xl font-bold text-white text-center mb-12'>
+            Choose Your Summary Style
+          </h2>
+          <div className='grid md:grid-cols-2 gap-12'>
+            <div className='bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg'>
+              <h3 className='text-xl font-semibold text-white mb-4 flex items-center'>
+                <Zap className='w-5 h-5 mr-2 text-yellow-400' />
+                Quick Summary
+              </h3>
+              <p className='text-gray-400 mb-4'>
+                Get a concise overview of the video content with brief action steps. Perfect when you&apos;re short on time and need the key points fast.
+              </p>
+              <div className='bg-gray-900/50 p-3 rounded-lg'>
+                <Image
+                  src='/images/quick-summary.png'
+                  alt='Quick Summary Toggle'
+                  width={600}
+                  height={100}
+                  className='w-full rounded-lg mb-3'
+                />
+                <p className='text-gray-500 text-sm italic'>Toggle the switch to enable Quick Summary mode</p>
+              </div>
+            </div>
+            
+            <div className='bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg'>
+              <h3 className='text-xl font-semibold text-white mb-4 flex items-center'>
+                <Clock className='w-5 h-5 mr-2 text-blue-400' />
+                Detailed Summary
+              </h3>
+              <p className='text-gray-400 mb-4'>
+                Receive a comprehensive analysis with in-depth explanations and detailed action steps. Ideal for deep learning and thorough understanding.
+              </p>
+              <div className='bg-gray-900/50 p-3 rounded-lg'>
+                <Image
+                  src='/images/detailed-summary.png'
+                  alt='Detailed Summary Toggle'
+                  width={600}
+                  height={100}
+                  className='w-full rounded-lg mb-3'
+                />
+                <p className='text-gray-500 text-sm italic'>The default mode provides comprehensive insights</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Dashboard Preview Section */}
         <div className='mb-20'>
           <h2 className='text-3xl font-bold text-white text-center mb-12'>
@@ -163,14 +211,14 @@ const HowItWorksClient = ({ user }: HowItWorksClientProps) => {
           <h2 className='text-3xl font-bold text-white mb-6'>
             Ready to Start Learning Smarter?
           </h2>
-          <Link href='/register'>
+          <RegisterLink>
             <Button
               size='lg'
               className='bg-purple-600 hover:bg-purple-700 text-white px-8'
             >
               Get Started Now
             </Button>
-          </Link>
+          </RegisterLink>
         </div>
       </div>
     </main>

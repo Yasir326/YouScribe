@@ -9,6 +9,7 @@ type PricingItem = {
   tagline: string;
   quota: number | 'unlimited';
   price: number;
+  isOneTime: boolean;
   features: Feature[];
 }
 
@@ -17,11 +18,12 @@ export const pricingItems: PricingItem[] = [
     plan: 'Basic',
     tagline: 'Perfect for getting started.',
     quota: 100,
-    price: 8.99,
+    price: 19.99,
+    isOneTime: true,
     features: [
       {
-        text: '100 video summaries p/m',
-        footnote: 'Reset monthly on billing date',
+        text: '100 video summaries',
+        footnote: 'One-time purchase, no recurring fees',
       },
       {
         text: 'Mobile-friendly interface',
@@ -45,6 +47,7 @@ export const pricingItems: PricingItem[] = [
     tagline: 'For growing needs.',
     quota: 300,
     price: 19.99,
+    isOneTime: false,
     features: [
       {
         text: '300 video summaries p/m',
@@ -68,12 +71,13 @@ export const pricingItems: PricingItem[] = [
   {
     plan: 'Pro',
     tagline: 'For power users.',
-    quota: 700,
-    price: 39.99,
+    quota: 'unlimited',
+    price: 49.99,
+    isOneTime: true,
     features: [
       {
-        text: '700 video summaries p/m',
-        footnote: 'Reset monthly on billing date',
+        text: 'Unlimited video summaries',
+        footnote: 'One-time purchase, no recurring fees',
       },
       {
         text: 'Mobile-friendly interface',
@@ -87,6 +91,10 @@ export const pricingItems: PricingItem[] = [
       },
       {
         text: 'Unlimited video length',
+      },
+      {
+        text: 'OpenAI API key configuration',
+        footnote: 'Use your own API key for maximum control',
       },
     ],
   },

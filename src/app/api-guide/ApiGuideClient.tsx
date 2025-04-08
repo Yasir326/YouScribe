@@ -4,35 +4,17 @@ import { Button } from "@/src/app/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/app/components/ui/card"
 import { motion } from "framer-motion"
 import { SparklesCore } from "@/src/app/components/sparkles"
-import { Key, Copy, Terminal, Code, CheckCircle2, Lock } from "lucide-react"
+import { Key, Terminal, Lock } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
-import { useToast } from "@/src/hooks/use-toast"
 import { KindeUser } from '@kinde-oss/kinde-auth-nextjs/types'
 import Navbar from '../components/Navbar'
 import NavbarLoggedIn from '../components/NavbarLoggedIn'
-
-const codeExample = `curl -X GET https://api.YouLearnNow.com/v1/balance \\
--H "Authorization: Bearer YOUR_API_TOKEN" \\
--H "Content-Type: application/json"`
 
 interface ApiGuideClientProps {
   user: KindeUser<Record<string, unknown>>
 }
 
 const ApiGuideClient = ({ user }: ApiGuideClientProps) => {
-  const [copied, setCopied] = useState(false)
-  const { toast } = useToast()
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-    setCopied(true)
-    toast({
-      title: "Copied to clipboard",
-      description: "The code example has been copied to your clipboard.",
-    })
-    setTimeout(() => setCopied(false), 2000)
-  }
 
   return (
     <div className="min-h-screen bg-black/[0.96] antialiased bg-grid-white/[0.02] relative">
@@ -119,42 +101,9 @@ const ApiGuideClient = ({ user }: ApiGuideClientProps) => {
                 </CardContent>
               </Card>
 
-              {/* Step 3 - Balance Check */}
-              <Card className="bg-gray-900 border-2 border-gray-800">
-                <CardHeader>
-                  <div className="flex items-center space-x-4">
-                    <div className="p-2 bg-purple-600/20 rounded-full">
-                      <Code className="h-6 w-6 text-purple-400" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-white text-xl">3. Check Your Balance</CardTitle>
-                      <CardDescription className="text-gray-400">Monitor your API usage and balance</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="relative">
-                    <pre className="bg-gray-800 p-4 rounded-lg overflow-x-auto text-gray-300">
-                      <code>{codeExample}</code>
-                    </pre>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="absolute top-2 right-2 text-gray-400 hover:text-white"
-                      onClick={() => copyToClipboard(codeExample)}
-                    >
-                      {copied ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : <Copy className="h-5 w-5" />}
-                    </Button>
-                  </div>
-                  <p className="text-sm text-gray-400 mt-4">
-                    You can also view your balance and usage history in the YouLearnNow dashboard under &quot;Usage & Billing&quot;
-                  </p>
-                </CardContent>
-              </Card>
-
               {/* API Documentation Link */}
               <div className="text-center">
-                <Link href="/api-docs">
+                <Link href="https://platform.openai.com/docs/api-reference/introduction">
                   <Button className="bg-purple-600 hover:bg-purple-700 text-white">
                     <Terminal className="mr-2 h-5 w-5" />
                     View Full API Documentation

@@ -61,13 +61,9 @@ export const appRouter = router({
 
       const subscriptionPlan = await getUserSubscriptionPlan()
 
-      if (subscriptionPlan.isSubscribed && dbUser.stripeCustomerId) {
-        const stripeSession = await stripe.billingPortal.sessions.create({
-          customer: dbUser.stripeCustomerId,
-          return_url: billingUrl,
-        })
-
-        return { url: stripeSession.url }
+      // If user has already purchased, redirect to billing page
+      if (subscriptionPlan.isPurchased) {
+        return { url: billingUrl }
       }
 
       const priceId = PLANS.find((plan) => plan.name === 'Pro')?.price.priceIds.test
@@ -83,7 +79,7 @@ export const appRouter = router({
         success_url: billingUrl,
         cancel_url: billingUrl,
         payment_method_types: ['card'],
-        mode: 'subscription',
+        mode: 'payment',
         billing_address_collection: 'auto',
         line_items: [
           {

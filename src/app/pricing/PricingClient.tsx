@@ -15,13 +15,20 @@ import Navbar from '@/src/app/components/Navbar';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import UpgradeButton from '@/src/app/components/UpgradeButton';
-import { KindeUser } from '@kinde-oss/kinde-auth-nextjs/types';
 import NavbarLoggedIn from '@/src/app/components/NavbarLoggedIn';
+
 interface PricingClientProps {
-  user: KindeUser<Record<string, unknown>>
+  user: {
+    id?: string;
+    email?: string;
+  } | null;
 }
 
 const PricingClient = ({ user }: PricingClientProps) => {
+  if (!user) {
+    return <div>Loading...</div>
+  }
+
   return (
     <div className='min-h-screen bg-black/[0.96] antialiased bg-grid-white/[0.02]'>
       {user ? <NavbarLoggedIn /> : <Navbar />}
@@ -41,9 +48,10 @@ const PricingClient = ({ user }: PricingClientProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            Simple pricing for your needs. No hidden fees.
+            Simple one-time payment. No subscriptions. No hidden fees.
           </motion.p>
         </div>
+
         <div className='pt-12 grid grid-cols-1 gap-10 lg:grid-cols-3'>
           <TooltipProvider>
             {pricingItems.map(
@@ -76,7 +84,7 @@ const PricingClient = ({ user }: PricingClientProps) => {
                     <p className='my-5 font-display text-6xl font-semibold text-white'>
                       ${price}
                     </p>
-                    <p className='text-gray-400'>per month</p>
+                    <p className='text-gray-400'>one-time payment</p>
                   </div>
                   <div className='flex h-20 items-center justify-center border-b border-t border-gray-800 bg-gray-900'>
                     <div className='flex items-center space-x-1'>
@@ -84,7 +92,7 @@ const PricingClient = ({ user }: PricingClientProps) => {
                         {quota === 'unlimited'
                           ? 'Unlimited'
                           : quota.toLocaleString()}{' '}
-                        Requests a month included
+                        Total Requests
                       </p>
                       <Tooltip>
                         <TooltipTrigger className='cursor-default'>
@@ -92,7 +100,7 @@ const PricingClient = ({ user }: PricingClientProps) => {
                         </TooltipTrigger>
                         <TooltipContent className='w-60 p-2 bg-gray-800 text-white'>
                           <p className='text-sm'>
-                            How many requests you can make per month
+                            Total number of requests available with your package
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -148,7 +156,7 @@ const PricingClient = ({ user }: PricingClientProps) => {
                         className={buttonVariants({
                           className: 'w-full',
                         })}>
-                        Sign up
+                        Purchase Now
                         <ArrowRight className='h-5 w-5 ml-1.5' />
                       </Link>
                     )}

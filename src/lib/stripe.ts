@@ -15,9 +15,7 @@ export async function getUserSubscriptionPlan() {
   if (!user.id) {
     return {
       ...PLANS[0],
-      isSubscribed: false,
-      isCanceled: false,
-      stripeCurrentPeriodEnd: null,
+      isPurchased: false,
     }
   }
 
@@ -30,36 +28,20 @@ export async function getUserSubscriptionPlan() {
   if (!dbUser) {
     return {
       ...PLANS[0],
-      isSubscribed: false,
-      isCanceled: false,
-      stripeCurrentPeriodEnd: null,
+      isPurchased: false,
     }
   }
 
-  const isSubscribed = Boolean(
-    dbUser.stripePriceId &&
-      dbUser.stripeCurrentPeriodEnd && // 86400000 = 1 day
-      dbUser.stripeCurrentPeriodEnd.getTime() + 86_400_000 > Date.now()
-  )
+  // Check if user has made a payment
+  const isPurchased = Boolean(dbUser.stripePriceId)
 
-  const plan = isSubscribed
+  const plan = isPurchased
     ? PLANS.find((plan) => plan.price.priceIds.test === dbUser.stripePriceId)
     : null
 
-  let isCanceled = false
-  if (isSubscribed && dbUser.stripeSubscriptionID) {
-    const stripePlan = await stripe.subscriptions.retrieve(
-      dbUser.stripeSubscriptionID
-    )
-    isCanceled = stripePlan.cancel_at_period_end
-  }
-
   return {
     ...plan,
-    stripeSubscriptionId: dbUser.stripeSubscriptionID,
-    stripeCurrentPeriodEnd: dbUser.stripeCurrentPeriodEnd,
     stripeCustomerId: dbUser.stripeCustomerId,
-    isSubscribed,
-    isCanceled,
+    isPurchased,
   }
 }
