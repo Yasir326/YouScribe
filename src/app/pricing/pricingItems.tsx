@@ -37,40 +37,6 @@ export const pricingItems: PricingItem[] = [
         negative: true,
       },
       {
-        text: 'Unlimited video length',
-        negative: true,
-      },
-      {
-        text: 'Use your own OpenAI API key',
-        footnote: 'Bring your own API key for additional cost savings',
-      },
-    ],
-  },
-  {
-    plan: 'Plus',
-    tagline: 'For growing needs.',
-    quota: 300,
-    price: 19.99,
-    isOneTime: false,
-    features: [
-      {
-        text: '300 video summaries p/m',
-        footnote: 'Reset monthly on billing date',
-      },
-      {
-        text: 'Mobile-friendly interface',
-      },
-      {
-        text: 'Enhanced quality summaries',
-        footnote: 'Powered by GPT-4 Turbo',
-      },
-      {
-        text: 'Standard support',
-      },
-      {
-        text: 'Extended video length support',
-      },
-      {
         text: 'Use your own OpenAI API key',
         footnote: 'Bring your own API key for additional cost savings',
       },
@@ -96,13 +62,6 @@ export const pricingItems: PricingItem[] = [
       },
       {
         text: 'Priority support',
-      },
-      {
-        text: 'Unlimited video length',
-      },
-      {
-        text: 'OpenAI API key configuration',
-        footnote: 'Use your own API key for maximum control',
       },
       {
         text: 'Use your own OpenAI API key',

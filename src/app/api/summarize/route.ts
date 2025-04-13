@@ -63,7 +63,8 @@ export async function POST(req: Request) {
     const userSubscription = await prisma.user.findUnique({
       where: { id: user.id },
       select: {
-        stripePriceId: true
+        stripePriceId: true,
+        usedQuota: true
       }
     });
 
@@ -73,34 +74,54 @@ export async function POST(req: Request) {
        userSubscription.stripePriceId.includes('Plus') ? 'Plus' : 'Basic') 
       : 'Basic';
 
-        const userRequests = await prisma.apiRequest.count({
-          where: {
-            userId: user.id,
-            createdAt: {
-              gte: new Date(Date.now() - 60 * 1000)
-            }
-          }
-        });
-    
-        const rateLimit = tier === 'Pro' ? 60 : tier === 'Plus' ? 30 : 10;
-        if (userRequests > rateLimit) {
-          return NextResponse.json(
-            { error: 'Rate limit exceeded. Please try again later.' },
-            { status: 429 }
-          );
-        }
+    // Check total quota limits
+    const totalQuota = tier === 'Pro' ? Infinity : tier === 'Plus' ? 250 : 100; // Based on pricing items
+    if (userSubscription?.usedQuota && userSubscription.usedQuota >= totalQuota && totalQuota !== Infinity) {
+      return NextResponse.json(
+        { error: 'You have reached your total summary quota. Please upgrade your plan to continue.' },
+        { status: 403 }
+      );
+    }
 
-    // Generate summary using OpenAI
+    // Also check rate limits (keep existing rate limiting for API abuse prevention)
+    const userRequests = await prisma.apiRequest.count({
+      where: {
+        userId: user.id,
+        createdAt: {
+          gte: new Date(Date.now() - 60 * 1000)
+        }
+      }
+    });
+
+    const rateLimit = tier === 'Pro' ? 60 : tier === 'Plus' ? 30 : 10;
+    if (userRequests > rateLimit) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
     const content = await generateSummary(transcript, tier, openai, quickMode);
 
-    // Create the summary without specifying the id field
-    await prisma.summary.create({
-      data: {
-        title: content.split('\n')[0],
-        content: content,
-        userId: user.id,
-      },
-    });
+    // Increment the used quota counter and create the summary
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user.id },
+        data: { usedQuota: { increment: 1 } }
+      }),
+      prisma.summary.create({
+        data: {
+          title: content.split('\n')[0],
+          content: content,
+          userId: user.id,
+        },
+      }),
+      prisma.apiRequest.create({
+        data: {
+          userId: user.id
+        }
+      })
+    ]);
 
     // Return the summary data
     const summary = {

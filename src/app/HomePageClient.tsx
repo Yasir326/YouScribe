@@ -13,11 +13,12 @@ import NavbarLoggedIn from './components/NavbarLoggedIn'
 
 interface HomePageClientProps {
   user: KindeUser<Record<string, unknown>>
+  suppressHydrationWarning?: boolean
 }
 
-export default function HomePageClient({ user }: HomePageClientProps) {
+export default function HomePageClient({ user, suppressHydrationWarning }: HomePageClientProps) {
   return (
-    <main className="min-h-screen bg-black/[0.96] antialiased bg-grid-white/[0.02] relative overflow-hidden">
+    <main className="min-h-screen bg-black/[0.96] antialiased bg-grid-white/[0.02] relative overflow-hidden" suppressHydrationWarning={suppressHydrationWarning}>
       {/* Ambient background with moving particles */}
       <div className="h-full w-full absolute inset-0 z-0">
         <SparklesCore
@@ -119,14 +120,6 @@ export default function HomePageClient({ user }: HomePageClientProps) {
                   </li>
                 </ul>
               </div>
-              {/* <div className="relative h-96">
-                <Image 
-                  src="/YouLearnNow-demo.png" 
-                  alt="YouLearnNow Demo" 
-                  fill
-                  className="object-contain" 
-                />
-              </div> */}
             </div>
           </div>
         </section>

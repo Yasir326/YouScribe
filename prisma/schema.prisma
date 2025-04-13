@@ -16,6 +16,7 @@ model User {
   stripePriceId          String?   @map("stripe_price_id")
   stripeCurrentPeriodEnd DateTime? @map("stripe_current_period_end")
   openaiApiKey          String?   @map("openai_api_key")
+  usedQuota             Int       @default(0) @map("used_quota")
   File                   File[]
   Summary                Summary[]
   ApiRequest             ApiRequest[]

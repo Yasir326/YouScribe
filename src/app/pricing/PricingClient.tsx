@@ -9,7 +9,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/src/app/components/ui/tooltip';
-import { ArrowRight, Check, HelpCircle, Minus, Info } from 'lucide-react';
+import { ArrowRight, Check, HelpCircle, Minus } from 'lucide-react';
 import { buttonVariants } from '@/src/app/components/ui/button';
 import Navbar from '@/src/app/components/Navbar';
 import { motion } from 'framer-motion';
@@ -56,20 +56,11 @@ const PricingClient = ({ user }: PricingClientProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
-            <Info className="h-5 w-5 text-blue-500" />
-            <p className='text-sm'>
-              This app requires your OpenAI API key to function.{' '}
-              <Link 
-                href="/api-guide" 
-                className="text-blue-500 hover:text-blue-400 underline"
-              >
-                Learn how to set up your API key
-              </Link>
-            </p>
+
           </motion.div>
         </div>
 
-        <div className='pt-12 grid grid-cols-1 gap-10 lg:grid-cols-3'>
+        <div className='pt-12 grid grid-cols-1 gap-10 md:grid-cols-2 md:max-w-3xl mx-auto'>
           <TooltipProvider>
             {pricingItems.map(
               ({ plan, tagline, quota, price, features }, index) => (
@@ -193,7 +184,7 @@ const PricingClient = ({ user }: PricingClientProps) => {
           >
             <h3 className='text-white text-lg font-semibold mb-3'>🔑 Important: API Key Required</h3>
             <p className='text-gray-400 text-sm mb-4'>
-              YouScribe requires an OpenAI API key to generate summaries. This gives you:
+              You Learn Now requires an OpenAI API key to generate summaries. This gives you:
             </p>
             <ul className='text-sm text-gray-400 space-y-2 mb-4'>
               <li>• Complete control over your API usage and costs</li>
