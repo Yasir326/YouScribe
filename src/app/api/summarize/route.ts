@@ -73,8 +73,22 @@ export async function POST(req: Request) {
        userSubscription.stripePriceId.includes('Plus') ? 'Plus' : 'Basic') 
       : 'Basic';
 
-    console.log('User tier:', tier);
-    console.log('Quick mode:', quickMode ? 'enabled' : 'disabled');
+        const userRequests = await prisma.apiRequest.count({
+          where: {
+            userId: user.id,
+            createdAt: {
+              gte: new Date(Date.now() - 60 * 1000)
+            }
+          }
+        });
+    
+        const rateLimit = tier === 'Pro' ? 60 : tier === 'Plus' ? 30 : 10;
+        if (userRequests > rateLimit) {
+          return NextResponse.json(
+            { error: 'Rate limit exceeded. Please try again later.' },
+            { status: 429 }
+          );
+        }
 
     // Generate summary using OpenAI
     const content = await generateSummary(transcript, tier, openai, quickMode);

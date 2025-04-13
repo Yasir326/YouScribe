@@ -18,6 +18,7 @@ model User {
   openaiApiKey          String?   @map("openai_api_key")
   File                   File[]
   Summary                Summary[]
+  ApiRequest             ApiRequest[]
 }
 
 model File {
@@ -45,6 +46,13 @@ model Summary {
   content   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  userId    String
+  User      User     @relation(fields: [userId], references: [id])
+}
+
+model ApiRequest {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
   userId    String
   User      User     @relation(fields: [userId], references: [id])
 }

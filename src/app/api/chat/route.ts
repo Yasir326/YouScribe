@@ -3,9 +3,6 @@ import OpenAI from 'openai';
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
 import { PrismaClient } from '@prisma/client';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 const prisma = new PrismaClient();
 
@@ -21,10 +18,21 @@ export async function POST(req: Request) {
     const userSubscription = await prisma.user.findUnique({
       where: { id: user.id },
       select: {
+        openaiApiKey: true,
         stripePriceId: true
       }
     });
 
+    if (!userSubscription?.openaiApiKey) {
+      return NextResponse.json(
+        { error: 'OpenAI API key not configured. Please add your API key in the dashboard settings.' },
+        { status: 400 }
+      );
+    }
+
+    const openai = new OpenAI({
+      apiKey: userSubscription.openaiApiKey,
+    });
     // Map price IDs to tiers
     const tier = userSubscription?.stripePriceId ? 
       (userSubscription.stripePriceId.includes('Pro') ? 'Pro' : 
