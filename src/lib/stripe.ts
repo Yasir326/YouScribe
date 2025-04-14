@@ -32,7 +32,6 @@ export async function getUserSubscriptionPlan() {
     }
   }
 
-  // Check if user has made a payment
   const isPurchased = Boolean(dbUser.stripePriceId)
 
   const plan = isPurchased

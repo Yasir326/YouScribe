@@ -7,7 +7,6 @@ import MaxWidthWrapper from "./MaxWidthWrapper"
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card"
 import { Button } from "./ui/button"
 import { Loader2, CreditCard } from "lucide-react"
-import { format } from "date-fns"
 import { motion } from "framer-motion"
 
 interface BillingFormProps {
@@ -66,20 +65,16 @@ const BillingForm = ({ subscriptionPlan }: BillingFormProps) => {
               disabled={isLoading}
             >
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {subscriptionPlan.isSubscribed ? "Manage Subscription" : "Upgrade to PRO"}
+              {subscriptionPlan.isPurchased ? "Manage Subscription" : "Upgrade to PRO"}
             </Button>
 
-            {subscriptionPlan.isSubscribed ? (
+            {subscriptionPlan.isPurchased ? (
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
                 className="rounded-full bg-gray-800 px-4 py-2 text-sm text-gray-300"
               >
-                {subscriptionPlan.isCanceled ? "Your plan will be canceled on " : "Your plan renews on "}
-                <span className="text-purple-400 font-medium">
-                  {format(subscriptionPlan.stripeCurrentPeriodEnd!, "dd.MM.yyyy")}
-                </span>
               </motion.p>
             ) : null}
           </CardFooter>

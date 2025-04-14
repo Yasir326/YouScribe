@@ -34,42 +34,22 @@ export async function POST(request: Request) {
   }
 
   if (event.type === 'checkout.session.completed') {
-    const subscription =
-      await stripe.subscriptions.retrieve(
-        session.subscription as string
-      )
-
+    // For one-time payment, just store the customer info and price ID
+    // No need to get subscription data as we're using a one-time payment
+    
+    const customerId = typeof session.customer === 'string' 
+      ? session.customer 
+      : session.customer?.toString() || null;
+    
+    // Reset used quota to 0 when a new plan is purchased
     await db.user.update({
       where: {
         id: session.metadata.userId,
       },
       data: {
-        stripeSubscriptionID: subscription.id,
-        stripeCustomerId: subscription.customer as string,
-        stripePriceId: subscription.items.data[0]?.price.id,
-        stripeCurrentPeriodEnd: new Date(
-          subscription.current_period_end * 1000
-        ),
-      },
-    })
-  }
-
-  if (event.type === 'invoice.payment_succeeded') {
-    // Retrieve the subscription details from Stripe.
-    const subscription =
-      await stripe.subscriptions.retrieve(
-        session.subscription as string
-      )
-
-    await db.user.update({
-      where: {
-        stripeSubscriptionID: subscription.id,
-      },
-      data: {
-        stripePriceId: subscription.items.data[0]?.price.id,
-        stripeCurrentPeriodEnd: new Date(
-          subscription.current_period_end * 1000
-        ),
+        stripeCustomerId: customerId,
+        stripePriceId: session.metadata.priceId, // Use metadata for storing price ID
+        usedQuota: 0, // Reset quota when purchasing a new plan
       },
     })
   }

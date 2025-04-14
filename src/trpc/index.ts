@@ -4,7 +4,7 @@ import { TRPCError } from '@trpc/server';
 import { db } from '../db';
 import { z } from 'zod';
 import { absoluteUrl } from '../lib/utils';
-import { getUserSubscriptionPlan, stripe } from '../lib/stripe';
+import { stripe } from '../lib/stripe';
 import { PLANS } from '../config/stripe';
 
 export const appRouter = router({
@@ -55,14 +55,16 @@ export const appRouter = router({
         where: {
           id: userId,
         },
+        select: {
+          stripePriceId: true
+        }
       });
 
       if (!dbUser) throw new TRPCError({ code: 'UNAUTHORIZED' })
 
-      const subscriptionPlan = await getUserSubscriptionPlan()
-
-      // If user has already purchased, redirect to billing page
-      if (subscriptionPlan.isPurchased) {
+      // If user has already purchased Pro, redirect to billing page
+      // They can still purchase Basic if they want to downgrade
+      if (dbUser.stripePriceId?.includes('Pro')) {
         return { url: billingUrl }
       }
 
@@ -79,7 +81,7 @@ export const appRouter = router({
         success_url: billingUrl,
         cancel_url: billingUrl,
         payment_method_types: ['card'],
-        mode: 'payment',
+        mode: 'payment', // One-time payment
         billing_address_collection: 'auto',
         line_items: [
           {
@@ -89,6 +91,7 @@ export const appRouter = router({
         ],
         metadata: {
           userId: userId,
+          priceId: priceId, // Store this as a backup
         },
       })
 

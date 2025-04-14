@@ -21,7 +21,8 @@ export async function POST(req: Request) {
       where: { id: user.id },
       select: {
         openaiApiKey: true,
-        stripePriceId: true
+        stripePriceId: true,
+        usedQuota: true
       }
     });
 
@@ -59,31 +60,23 @@ export async function POST(req: Request) {
       );
     }
 
-    // Get user's subscription tier from database
-    const userSubscription = await prisma.user.findUnique({
-      where: { id: user.id },
-      select: {
-        stripePriceId: true,
-        usedQuota: true
-      }
-    });
-
-    // Map price IDs to tiers
-    const tier = userSubscription?.stripePriceId ? 
-      (userSubscription.stripePriceId.includes('Pro') ? 'Pro' : 
-       userSubscription.stripePriceId.includes('Plus') ? 'Plus' : 'Basic') 
+    // Determine user's tier from their stripePriceId
+    const tier = dbUser.stripePriceId ? 
+      (dbUser.stripePriceId.includes('Pro') ? 'Pro' : 'Basic') 
       : 'Basic';
 
-    // Check total quota limits
-    const totalQuota = tier === 'Pro' ? Infinity : tier === 'Plus' ? 250 : 100; // Based on pricing items
-    if (userSubscription?.usedQuota && userSubscription.usedQuota >= totalQuota && totalQuota !== Infinity) {
+    // Check total quota limits based on tier
+    // Pro is unlimited, Basic has 100 summaries
+    const totalQuota = tier === 'Pro' ? Infinity : 100;
+    
+    if (dbUser.usedQuota >= totalQuota && totalQuota !== Infinity) {
       return NextResponse.json(
         { error: 'You have reached your total summary quota. Please upgrade your plan to continue.' },
         { status: 403 }
       );
     }
 
-    // Also check rate limits (keep existing rate limiting for API abuse prevention)
+    // Check rate limits (prevent abuse)
     const userRequests = await prisma.apiRequest.count({
       where: {
         userId: user.id,
@@ -93,7 +86,7 @@ export async function POST(req: Request) {
       }
     });
 
-    const rateLimit = tier === 'Pro' ? 60 : tier === 'Plus' ? 30 : 10;
+    const rateLimit = tier === 'Pro' ? 60 : 10;
     if (userRequests > rateLimit) {
       return NextResponse.json(
         { error: 'Rate limit exceeded. Please try again later.' },
