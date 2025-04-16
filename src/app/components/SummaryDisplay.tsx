@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/src/app/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/app/components/ui/card"
 import { Download, ThumbsUp, Copy } from "lucide-react"
@@ -20,13 +20,7 @@ export function SummaryDisplay({ summary }: { summary: Summary | null }) {
   const [likeCount, setLikeCount] = useState(0)
   const { toast } = useToast()
 
-  useEffect(() => {
-    if (summary) {
-      fetchLikeCount()
-    }
-  }, [summary])
-
-  const fetchLikeCount = async () => {
+  const fetchLikeCount = useCallback(async () => {
     if (!summary) return
 
     try {
@@ -44,7 +38,13 @@ export function SummaryDisplay({ summary }: { summary: Summary | null }) {
         variant: "destructive",
       })
     }
-  }
+  }, [summary, toast])
+
+  useEffect(() => {
+    if (summary) {
+      fetchLikeCount()
+    }
+  }, [summary, fetchLikeCount])
 
   const handleLike = async () => {
     if (!summary) return

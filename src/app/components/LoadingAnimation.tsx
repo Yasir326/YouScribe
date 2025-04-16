@@ -39,7 +39,7 @@ export function LoadingAnimation() {
       clearInterval(timer)
       clearInterval(messageTimer)
     }
-  }, [])
+  }, [loadingMessages.length])
 
   return (
     <motion.div

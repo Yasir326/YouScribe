@@ -33,10 +33,7 @@ export async function POST(request: Request) {
     })
   }
 
-  if (event.type === 'checkout.session.completed') {
-    // For one-time payment, just store the customer info and price ID
-    // No need to get subscription data as we're using a one-time payment
-    
+  if (event.type === 'checkout.session.completed' || event.type === 'invoice.payment_succeeded') {    
     const customerId = typeof session.customer === 'string' 
       ? session.customer 
       : session.customer?.toString() || null;
