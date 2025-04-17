@@ -24,6 +24,14 @@ export default async function DashboardPage() {
   });
 
   if (!dbUser) redirect('/auth-callback?origin=dashboard');
+  
+  // Check if user has purchased a plan
+  const hasPurchasedPlan = Boolean(dbUser.stripePriceId);
+  
+  // If user hasn't purchased a plan, redirect to billing page
+  if (!hasPurchasedPlan) {
+    redirect('/pricing');
+  }
 
   return (
     <div className="min-h-screen flex flex-col">

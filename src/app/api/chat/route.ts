@@ -19,7 +19,8 @@ export async function POST(req: Request) {
       where: { id: user.id },
       select: {
         openaiApiKey: true,
-        stripePriceId: true
+        stripePriceId: true,
+        planName: true
       }
     });
 
@@ -33,11 +34,11 @@ export async function POST(req: Request) {
     const openai = new OpenAI({
       apiKey: userSubscription.openaiApiKey,
     });
-    // Map price IDs to tiers
-    const tier = userSubscription?.stripePriceId ? 
-      (userSubscription.stripePriceId.includes('Pro') ? 'Pro' : 
-       userSubscription.stripePriceId.includes('Plus') ? 'Plus' : 'Basic') 
-      : 'Basic';
+    
+    const tier = userSubscription.planName || 
+      (userSubscription.planName ? 
+        (userSubscription.planName.includes('Pro') ? 'Pro' : 'Basic') 
+        : 'Basic');
 
     // Select model based on tier
     const model = 

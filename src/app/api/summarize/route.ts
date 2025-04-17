@@ -22,9 +22,18 @@ export async function POST(req: Request) {
       select: {
         openaiApiKey: true,
         stripePriceId: true,
+        planName: true,
         usedQuota: true
       }
     });
+
+    // Check if user has purchased a plan
+    if (!dbUser?.stripePriceId) {
+      return NextResponse.json(
+        { error: 'You need to purchase a plan to access this feature. Please visit the billing page to upgrade.' },
+        { status: 403 }
+      );
+    }
 
     if (!dbUser?.openaiApiKey) {
       return NextResponse.json(
@@ -60,10 +69,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // Determine user's tier from their stripePriceId
-    const tier = dbUser.stripePriceId ? 
-      (dbUser.stripePriceId.includes('Pro') ? 'Pro' : 'Basic') 
-      : 'Basic';
+    const tier = dbUser.planName || 
+      (dbUser.planName ? 
+        (dbUser.planName.includes('Pro') ? 'Pro' : 'Basic') 
+        : 'Basic');
 
     // Check total quota limits based on tier
     // Pro is unlimited, Basic has 100 summaries

@@ -51,6 +51,21 @@ export function YoutubeForm({ onSummaryGenerated, hasApiKey }: YoutubeFormProps)
 
       if (!response.ok) {
         const errorData = await response.json()
+        
+        // Handle the case where the user needs to purchase a plan
+        if (response.status === 403 && errorData.error?.includes('purchase a plan')) {
+          toast({
+            title: "Subscription Required",
+            description: "You need to purchase a plan to use this feature. Please visit the billing page.",
+            variant: "destructive",
+          })
+          // Redirect to billing page after a short delay
+          setTimeout(() => {
+            window.location.href = '/pricing'
+          }, 2000)
+          return
+        }
+        
         throw new Error(errorData.error || "An error occurred while processing the request")
       }
 
