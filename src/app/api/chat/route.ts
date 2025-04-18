@@ -32,13 +32,15 @@ export async function POST(req: NextRequest) {
     const { message, transcript, summary } = body;
 
     if (!message || !transcript) {
+      console.error('Missing required fields:', { hasMessage: !!message, hasTranscript: !!transcript });
       return NextResponse.json(
-        { error: 'Required fields missing (message and transcript are required)' },
+        { error: 'Missing required fields (message and transcript are required)' },
         { status: 400 }
       );
     }
 
-    // Get the user's subscription details
+    // Get user's API key
+    console.log('Fetching user subscription data');
     const userSubscription = await db.user.findUnique({
       where: { id: user.id },
       select: {
@@ -49,29 +51,32 @@ export async function POST(req: NextRequest) {
     });
 
     if (!userSubscription?.openaiApiKey) {
+      console.error('OpenAI API key not configured for user');
       return NextResponse.json(
         { error: 'OpenAI API key not configured. Please add your API key in the dashboard settings.' },
         { status: 400 }
       );
     }
 
-    // Initialize OpenAI client
+    // Select model based on user tier
+    const tier = userSubscription.planName || 'Basic';
+    const model = (() => {
+      if (tier === 'Pro') return 'gpt-4o';
+      if (tier === 'Plus') return 'gpt-4-turbo-preview';
+      return 'gpt-3.5-turbo'; // Default for Basic
+    })();
+    
+    console.log('Using model based on tier:', { tier, model });
+
+    // Initialize OpenAI
     const openai = new OpenAI({
       apiKey: userSubscription.openaiApiKey,
     });
-    
-    // Determine model based on user's plan
-    const tier = userSubscription.planName || 'Basic';
-    const model = 
-      ({
-        Basic: 'gpt-3.5-turbo',
-        Plus: 'gpt-4-turbo-preview',
-        Pro: 'gpt-4o',
-      } as const)[tier as 'Basic' | 'Plus' | 'Pro'] || 'gpt-3.5-turbo';
 
-    // Call OpenAI API
+    // Make OpenAI request
+    console.log('Making OpenAI API request');
     const response = await openai.chat.completions.create({
-      model: model,
+      model,
       messages: [
         {
           role: 'system',
@@ -94,15 +99,15 @@ export async function POST(req: NextRequest) {
       max_tokens: 500,
     });
 
-    // Return the response
+    // Return AI response
+    console.log('Successfully generated chat response');
     return NextResponse.json({
       reply: response.choices[0].message?.content || 'No response generated',
     });
   } catch (error) {
-    console.error('Error processing chat:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Chat API error:', error);
     return NextResponse.json(
-      { error: `An error occurred while processing the chat: ${errorMessage}` },
+      { error: `Chat API error: ${error instanceof Error ? error.message : 'Unknown error'}` },
       { status: 500 }
     );
   }

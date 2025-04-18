@@ -5,18 +5,22 @@ import { YoutubeTranscript } from 'youtube-transcript';
 import { db } from '@/src/db';
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
 
-// Export a dynamic config to tell Next.js this route should not be statically analyzed
+// Force this route to be dynamic and bypass caching
 export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
 
 export async function POST(req: NextRequest) {
+  console.log('Received summarize request');
   try {
     const { getUser } = getKindeServerSession();
     const user = await getUser();
 
     if (!user || !user.id) {
+      console.error('Unauthorized access attempt');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    console.log('User authenticated successfully');
 
     // Check if user has configured OpenAI API key
     const dbUser = await db.user.findUnique({
