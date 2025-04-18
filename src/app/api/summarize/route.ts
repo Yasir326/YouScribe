@@ -2,10 +2,8 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { YoutubeTranscript } from 'youtube-transcript';
-import { PrismaClient } from '@prisma/client';
+import { db } from '@/src/db';
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
-
-const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
   try {
@@ -17,7 +15,7 @@ export async function POST(req: Request) {
     }
 
     // Check if user has configured OpenAI API key
-    const dbUser = await prisma.user.findUnique({
+    const dbUser = await db.user.findUnique({
       where: { id: user.id },
       select: {
         openaiApiKey: true,
@@ -86,7 +84,7 @@ export async function POST(req: Request) {
     }
 
     // Check rate limits (prevent abuse)
-    const userRequests = await prisma.apiRequest.count({
+    const userRequests = await db.apiRequest.count({
       where: {
         userId: user.id,
         createdAt: {
@@ -106,19 +104,19 @@ export async function POST(req: Request) {
     const content = await generateSummary(transcript, tier, openai, quickMode);
 
     // Increment the used quota counter and create the summary
-    await prisma.$transaction([
-      prisma.user.update({
+    await db.$transaction([
+      db.user.update({
         where: { id: user.id },
         data: { usedQuota: { increment: 1 } }
       }),
-      prisma.summary.create({
+      db.summary.create({
         data: {
           title: content.split('\n')[0],
           content: content,
           userId: user.id,
         },
       }),
-      prisma.apiRequest.create({
+      db.apiRequest.create({
         data: {
           userId: user.id
         }

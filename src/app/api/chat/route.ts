@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
-import { PrismaClient } from '@prisma/client';
-
-
-const prisma = new PrismaClient();
+import { db } from '@/src/db';
 
 export async function POST(req: Request) {
   try {
@@ -15,7 +12,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userSubscription = await prisma.user.findUnique({
+    const userSubscription = await db.user.findUnique({
       where: { id: user.id },
       select: {
         openaiApiKey: true,
