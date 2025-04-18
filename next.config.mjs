@@ -23,6 +23,11 @@ const nextConfig = {
     config.resolve.alias.encoding = false
     return config
   },
+  
+  // Suppress useSearchParams suspense warning
+  experimental: {
+    missingSuspenseWithCSRBailout: false,
+  }
 }
 
 export default nextConfig;
