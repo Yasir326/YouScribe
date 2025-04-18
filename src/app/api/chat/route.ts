@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
 import { db } from '@/src/db';
 
+// Ensure function is wrapped correctly for route handler
 export async function POST(req: Request) {
   try {
     const { getUser } = getKindeServerSession();
@@ -28,14 +29,20 @@ export async function POST(req: Request) {
       );
     }
 
-    const openai = new OpenAI({
-      apiKey: userSubscription.openaiApiKey,
-    });
+    let openai: OpenAI;
+    try {
+      openai = new OpenAI({
+        apiKey: userSubscription.openaiApiKey || '',
+      });
+    } catch (apiError) {
+      console.error('Error initializing OpenAI client:', apiError);
+      return NextResponse.json(
+        { error: 'Invalid OpenAI API key configuration.' },
+        { status: 400 }
+      );
+    }
     
-    const tier = userSubscription.planName || 
-      (userSubscription.planName ? 
-        (userSubscription.planName.includes('Pro') ? 'Pro' : 'Basic') 
-        : 'Basic');
+    const tier = userSubscription.planName || 'Basic';
 
     // Select model based on tier
     const model = 
@@ -45,35 +52,61 @@ export async function POST(req: Request) {
         Pro: 'gpt-4o',
       } as const)[tier as 'Basic' | 'Plus' | 'Pro'] || 'gpt-3.5-turbo';
 
-    const { message, transcript, summary } = await req.json();
+    let messageData;
+    try {
+      messageData = await req.json();
+    } catch (parseError) {
+      console.error('Error parsing request:', parseError);
+      return NextResponse.json(
+        { error: 'Invalid request format' },
+        { status: 400 }
+      );
+    }
 
-    const response = await openai.chat.completions.create({
-      model: model,
-      messages: [
-        {
-          role: 'system',
-          content: `You are a helpful assistant answering questions about a YouTube video's content. 
-          Use the transcript as your main reference. Answer questions that are directly based on the transcript, as well as questions about the themes, topics, or ideas suggested by the transcript—even if the details are not stated explicitly. 
-          If a question isn't directly in the transcript but relates to its themes, provide an answer based on that connection. However, if a question is completely unrelated to the video's content, explain politely that you can only answer questions about the video's content. Avoid making assumptions or adding details beyond what the transcript and its related themes support.
-          
-          SUMMARY:
-          ${summary}
-          
-          TRANSCRIPT:
-          ${transcript}`,
-        },
-        {
-          role: 'user',
-          content: message,
-        },
-      ],
-      temperature: 0.7,
-      max_tokens: 500,
-    });
+    const { message, transcript, summary } = messageData;
 
-    return NextResponse.json({
-      reply: response.choices[0].message?.content || 'No response generated',
-    });
+    if (!message || !transcript) {
+      return NextResponse.json(
+        { error: 'Missing required fields: message and transcript' },
+        { status: 400 }
+      );
+    }
+
+    try {
+      const response = await openai.chat.completions.create({
+        model: model,
+        messages: [
+          {
+            role: 'system',
+            content: `You are a helpful assistant answering questions about a YouTube video's content. 
+            Use the transcript as your main reference. Answer questions that are directly based on the transcript, as well as questions about the themes, topics, or ideas suggested by the transcript—even if the details are not stated explicitly. 
+            If a question isn't directly in the transcript but relates to its themes, provide an answer based on that connection. However, if a question is completely unrelated to the video's content, explain politely that you can only answer questions about the video's content. Avoid making assumptions or adding details beyond what the transcript and its related themes support.
+            
+            SUMMARY:
+            ${summary || 'No summary provided'}
+            
+            TRANSCRIPT:
+            ${transcript}`,
+          },
+          {
+            role: 'user',
+            content: message,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 500,
+      });
+
+      return NextResponse.json({
+        reply: response.choices[0].message?.content || 'No response generated',
+      });
+    } catch (openaiError) {
+      console.error('OpenAI API error:', openaiError);
+      return NextResponse.json(
+        { error: 'An error occurred while processing your request with the AI service' },
+        { status: 500 }
+      );
+    }
   } catch (error) {
     console.error('Error processing chat:', error);
     return NextResponse.json(

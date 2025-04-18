@@ -41,11 +41,39 @@ export async function POST(req: Request) {
     }
 
     // Initialize OpenAI with user's API key
-    const openai = new OpenAI({
-      apiKey: dbUser.openaiApiKey,
-    });
+    let openai: OpenAI;
+    try {
+      openai = new OpenAI({
+        apiKey: dbUser.openaiApiKey || '',
+      });
+    } catch (apiError) {
+      console.error('Error initializing OpenAI client:', apiError);
+      return NextResponse.json(
+        { error: 'Invalid OpenAI API key configuration.' },
+        { status: 400 }
+      );
+    }
 
-    const { url, quickMode } = await req.json();
+    // Validate request data
+    let requestData;
+    try {
+      requestData = await req.json();
+    } catch (parseError) {
+      console.error('Error parsing request:', parseError);
+      return NextResponse.json(
+        { error: 'Invalid request format' },
+        { status: 400 }
+      );
+    }
+    
+    const { url, quickMode } = requestData;
+    
+    if (!url) {
+      return NextResponse.json(
+        { error: 'Missing YouTube URL' },
+        { status: 400 }
+      );
+    }
 
     // Extract video ID from URL
     const videoId = extractVideoId(url);
