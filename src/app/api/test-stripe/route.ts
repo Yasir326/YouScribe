@@ -2,16 +2,8 @@ import { NextResponse } from 'next/server';
 import { stripe } from '@/src/lib/stripe';
 import { PLANS } from '@/src/config/stripe';
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
-    // Debug info
-    console.log('Stripe Key Present:', !!process.env.STRIPE_SECRET_KEY);
-    console.log('Stripe API Version:', process.env.STRIPE_API_VERSION || 'Not set');
-    console.log('Price IDs:', {
-      basicPriceId: process.env.STRIPE_BASIC_PRICE_ID,
-      proPriceId: process.env.STRIPE_PRO_PRICE_ID,
-    });
-
     // Get a product
     const selectedPlan = PLANS.find((plan) => plan.name === 'Pro');
     if (!selectedPlan) {

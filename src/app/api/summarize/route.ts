@@ -214,7 +214,6 @@ async function generateSummary(
         const charsToKeep = Math.floor(transcript.length * truncationRatio * 0.9); // 10% safety margin
         processedTranscript = transcript.substring(0, charsToKeep) + 
           "\n\n[Transcript truncated due to length limitations]";
-        console.log(`Truncated transcript from ${transcript.length} to ${processedTranscript.length} characters`);
       }
       
       const promptContent = quickMode
@@ -272,9 +271,6 @@ ${processedTranscript}`;
       });
 
       const summary = response.choices[0].message?.content || '';
-      console.log('Successfully used model:', model);
-      console.log('User tier:', userTier);
-      console.log('Quick mode:', quickMode ? 'enabled' : 'disabled');
       return summary;
       
     } catch (error: any) {
@@ -297,7 +293,6 @@ ${processedTranscript}`;
         throw new Error(`All available models are rate limited or exceeded token limits. Please try again later. Last error: ${error.message}`);
       }
       
-      console.log(`Issue with model ${model}, trying next model...`);
     }
   }
   

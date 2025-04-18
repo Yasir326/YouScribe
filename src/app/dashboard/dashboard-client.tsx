@@ -17,7 +17,6 @@ export default function DashboardClient({ hasApiKey }: DashboardClientProps) {
   const [summary, setSummary] = useState<Summary | null>(null)
 
   const handleSummaryGenerated = (newSummary: Summary) => {
-    console.log('New summary received:', newSummary)
     setSummary(newSummary)
   }
 

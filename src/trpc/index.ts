@@ -42,8 +42,6 @@ export const appRouter = router({
 
       // If email already exists but with a different ID, merge the accounts
       if (existingUserByEmail) {
-        console.log(`Merging user accounts for email ${user.email}`);
-        
         try {
           // Create new user with the Kinde ID but existing user data
           await db.user.create({
@@ -58,14 +56,6 @@ export const appRouter = router({
               usedQuota: existingUserByEmail.usedQuota
             },
           });
-          
-          // Perform a simpler migration - just inform the user of the merge
-          // without migrating all associated data, which can cause FK violations
-          console.log(`Created new user with existing data for ${user.email}`);
-          
-          // We won't delete the old user or try to migrate associated data
-          // This avoids foreign key constraint issues but means the user's old data
-          // won't be visible in the new session
           
           return { 
             success: true, 
@@ -165,14 +155,6 @@ export const appRouter = router({
         })
       }
 
-      // Log key info for debugging
-      console.log('Creating Stripe session with price ID:', priceId)
-      console.log('Using environment variables:', {
-        basicPriceId: process.env.STRIPE_BASIC_PRICE_ID,
-        proPriceId: process.env.STRIPE_PRO_PRICE_ID,
-        hasStripeKey: !!process.env.STRIPE_SECRET_KEY
-      })
-
       try {
         const stripeSession = await stripe.checkout.sessions.create({
           success_url: billingUrl,
@@ -193,7 +175,6 @@ export const appRouter = router({
           },
         })
 
-        console.log('Stripe session created successfully:', stripeSession.id)
         return { url: stripeSession.url }
       } catch (stripeError) {
         console.error('Stripe API error details:', {

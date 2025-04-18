@@ -55,8 +55,6 @@ export async function POST(request: Request) {
       }
     }
     
-    console.log(`Setting user ${session.metadata.userId} to plan: ${planName} with priceId: ${priceId}`)
-    
     // Reset used quota to 0 when a new plan is purchased
     await db.user.update({
       where: {
