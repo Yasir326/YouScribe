@@ -137,40 +137,82 @@ export const appRouter = router({
 
       // Get the Pro plan from our configuration
       const selectedPlan = PLANS.find((plan) => plan.name === 'Pro')
-      const priceId = selectedPlan?.price.priceIds.test
       
-      if (!priceId || !selectedPlan) {
+      if (!selectedPlan) {
+        console.error('Selected plan not found in PLANS configuration')
         throw new TRPCError({ 
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'Price ID not found'
+          message: 'Plan configuration not found'
+        })
+      }
+      
+      const priceId = selectedPlan.price.priceIds.test
+      
+      if (!priceId) {
+        console.error('Missing STRIPE_PRO_PRICE_ID environment variable')
+        throw new TRPCError({ 
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Stripe price ID not found - check environment variables'
+        })
+      }
+      
+      // Ensure price ID is in correct format (price_XXXXXXX)
+      if (!priceId.startsWith('price_')) {
+        console.error('Invalid price ID format:', priceId)
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Invalid Stripe price ID format'
         })
       }
 
-      const stripeSession = await stripe.checkout.sessions.create({
-        success_url: billingUrl,
-        cancel_url: billingUrl,
-        payment_method_types: ['card'],
-        mode: 'payment', // One-time payment
-        billing_address_collection: 'auto',
-        line_items: [
-          {
-            price: priceId,
-            quantity: 1,
-          },
-        ],
-        metadata: {
-          userId: userId,
-          priceId: priceId,
-          planName: selectedPlan.name // Include the plan name in metadata
-        },
+      // Log key info for debugging
+      console.log('Creating Stripe session with price ID:', priceId)
+      console.log('Using environment variables:', {
+        basicPriceId: process.env.STRIPE_BASIC_PRICE_ID,
+        proPriceId: process.env.STRIPE_PRO_PRICE_ID,
+        hasStripeKey: !!process.env.STRIPE_SECRET_KEY
       })
 
-      return { url: stripeSession.url }
+      try {
+        const stripeSession = await stripe.checkout.sessions.create({
+          success_url: billingUrl,
+          cancel_url: billingUrl,
+          payment_method_types: ['card'],
+          mode: 'payment', // One-time payment
+          billing_address_collection: 'auto',
+          line_items: [
+            {
+              price: priceId,
+              quantity: 1,
+            },
+          ],
+          metadata: {
+            userId: userId,
+            priceId: priceId,
+            planName: selectedPlan.name // Include the plan name in metadata
+          },
+        })
+
+        console.log('Stripe session created successfully:', stripeSession.id)
+        return { url: stripeSession.url }
+      } catch (stripeError) {
+        console.error('Stripe API error details:', {
+          type: stripeError instanceof Error ? stripeError.constructor.name : typeof stripeError,
+          message: stripeError instanceof Error ? stripeError.message : 'Unknown error',
+          stack: stripeError instanceof Error ? stripeError.stack : undefined,
+        })
+        
+        // Re-throw as TRPC error
+        throw new TRPCError({ 
+          code: 'INTERNAL_SERVER_ERROR',
+          message: stripeError instanceof Error ? stripeError.message : 'Stripe API call failed'
+        })
+      }
     } catch (error) {
       console.error('Error creating Stripe session:', error)
       throw new TRPCError({ 
         code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to create Stripe session'
+        message: error instanceof Error ? error.message : 'Failed to create Stripe session'
       })
     }
   }),

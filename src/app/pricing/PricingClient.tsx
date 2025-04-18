@@ -25,13 +25,13 @@ interface PricingClientProps {
 }
 
 const PricingClient = ({ user }: PricingClientProps) => {
-  if (!user) {
-    return <div>Loading...</div>
-  }
+
+  // Check if user is actually logged in (has an ID)
+  const isLoggedIn = !!user?.id;
 
   return (
     <div className='min-h-screen bg-black/[0.96] antialiased bg-grid-white/[0.02]'>
-      {user ? <NavbarLoggedIn /> : <Navbar />}
+      {isLoggedIn ? <NavbarLoggedIn /> : <Navbar />}
       <MaxWidthWrapper className='mb-8 mt-24 text-center max-w-5xl'>
         <div className='mx-auto mb-10 sm:max-w-lg'>
           <motion.h1
@@ -156,7 +156,7 @@ const PricingClient = ({ user }: PricingClientProps) => {
                   </ul>
                   <div className='border-t border-gray-800' />
                   <div className='p-5'>
-                    {user ? (
+                    {isLoggedIn ? (
                       <UpgradeButton />
                     ) : (
                       <Link

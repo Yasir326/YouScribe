@@ -5,11 +5,11 @@ const PricingPage = async () => {
   const { getUser } = getKindeServerSession()
   const kindeUser = await getUser()
   
-  // Convert KindeUser to expected type (null -> undefined)
-  const user = {
-    id: kindeUser?.id,
-    email: kindeUser?.email || undefined
-  }
+  // Create proper user object or null if not logged in
+  const user = kindeUser && kindeUser.id ? {
+    id: kindeUser.id,
+    email: kindeUser.email || undefined
+  } : null
 
   return (
     <div className='min-h-screen bg-black/[0.96] antialiased bg-grid-white/[0.02]'>

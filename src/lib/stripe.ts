@@ -4,6 +4,8 @@ import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server'
 import Stripe from 'stripe'
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '', {
+  // This is the API version you're configured to use
+  // If you're getting errors, use one of the standard versions listed in Stripe docs
   apiVersion: '2025-01-27.acacia',
   typescript: true,
 })
