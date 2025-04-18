@@ -16,7 +16,7 @@ interface BillingFormProps {
 const BillingForm = ({ subscriptionPlan }: BillingFormProps) => {
   const { toast } = useToast()
 
-  const { mutate: createStripeSession, isLoading } = trpc.createStripeSession.useMutation({
+  const { mutate: createStripeSession, isPending } = trpc.createStripeSession.useMutation({
     onSuccess: ({ url }) => {
       if (url) window.location.href = url
       if (!url) {
@@ -61,10 +61,10 @@ const BillingForm = ({ subscriptionPlan }: BillingFormProps) => {
           <CardFooter className="flex flex-col items-start space-y-4 md:flex-row md:justify-between md:space-y-0 border-t border-gray-800 mt-6 pt-6">
             <Button
               type="submit"
-              className={`bg-purple-600 hover:bg-purple-700 text-white ${isLoading ? "opacity-75" : ""}`}
-              disabled={isLoading}
+              className={`bg-purple-600 hover:bg-purple-700 text-white ${isPending ? "opacity-75" : ""}`}
+              disabled={isPending}
             >
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {subscriptionPlan.isPurchased ? "Manage Subscription" : "Upgrade to PRO"}
             </Button>
 
