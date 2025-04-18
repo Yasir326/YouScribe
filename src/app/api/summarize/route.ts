@@ -1,11 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { YoutubeTranscript } from 'youtube-transcript';
 import { db } from '@/src/db';
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
 
-export async function POST(req: Request) {
+// Export a dynamic config to tell Next.js this route should not be statically analyzed
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
+export async function POST(req: NextRequest) {
   try {
     const { getUser } = getKindeServerSession();
     const user = await getUser();
