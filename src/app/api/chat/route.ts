@@ -39,8 +39,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get user's API key
-    console.log('Fetching user subscription data');
+    // Get the user's subscription details
     const userSubscription = await db.user.findUnique({
       where: { id: user.id },
       select: {
