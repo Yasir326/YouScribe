@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import { trpc } from '../_trpc/client'
 import { Loader2 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/src/app/components/ui/button'
 import { toast } from '@/src/hooks/use-toast'
 
@@ -21,8 +21,13 @@ const Page = () => {
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
 
-  trpc.authCallback.useQuery(undefined, {
-    onSuccess: (data) => {
+  const { data, isLoading } = trpc.authCallback.useQuery(undefined, { 
+    retry: 1,
+    retryDelay: 500 
+  });
+
+  useEffect(() => {
+    if (!isLoading && data) {
       // Cast the data to our extended type
       const response = data as AuthCallbackResponse;
       
@@ -57,8 +62,17 @@ const Page = () => {
           router.push(origin ? `/${origin}` : '/dashboard')
         }
       }
-    },
-    onError: (err) => {
+    }
+  }, [data, isLoading, origin, router]);
+
+  // Error handling with useEffect
+  const trpcQuery = trpc.authCallback.useQuery(undefined, {
+    retry: false,
+    enabled: false
+  });
+
+  useEffect(() => {
+    trpcQuery.refetch().catch(err => {
       console.error("Authentication error:", err)
       setError(err.message || "An error occurred during authentication")
       
@@ -70,10 +84,8 @@ const Page = () => {
           router.push(origin ? `/${origin}` : '/dashboard')
         }, 1500)
       }
-    },
-    retry: 1, // Reduce retries to avoid excessive database operations
-    retryDelay: 500,
-  })
+    });
+  }, [origin, router, trpcQuery]);
 
   if (message) {
     return (
