@@ -4,6 +4,9 @@ import OpenAI from 'openai';
 import { YoutubeTranscript } from 'youtube-transcript';
 import { db } from '@/src/db';
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+import https from 'https';
+import http from 'http';
 
 // Force this route to be dynamic and bypass caching
 export const dynamic = 'force-dynamic';
@@ -184,230 +187,111 @@ function extractVideoId(url: string): string | null {
 
 async function getTranscript(videoId: string): Promise<string> {
   try {
-    // For production environments, use SmartProxy if configured
     if (process.env.NODE_ENV === 'production' && process.env.SMARTPROXY_USERNAME && process.env.SMARTPROXY_PASSWORD) {
       console.log('Using SmartProxy for YouTube transcript fetch');
       
-      // Set up HTTP_PROXY environment variable for Node.js
-      // Node.js native fetch and many libraries respect this environment variable
-      const proxyUrl = `http://${process.env.SMARTPROXY_USERNAME}:${process.env.SMARTPROXY_PASSWORD}@gate.smartproxy.com:10001`;
-      process.env.HTTP_PROXY = proxyUrl;
-      // Also set HTTPS_PROXY as some libraries use this instead
-      process.env.HTTPS_PROXY = proxyUrl;
+      // Create proxy URL - using US endpoint and HTTPS as recommended by SmartProxy
+      const username = process.env.SMARTPROXY_USERNAME;
+      const password = process.env.SMARTPROXY_PASSWORD;
+      const proxyUrl = `https://${username}:${password}@us.smartproxy.com:10000`;
+      
+      // Create the proxy agent
+      const proxyAgent = new HttpsProxyAgent(proxyUrl);
       
       try {
-        // With HTTP_PROXY set, standard fetch will use the proxy
-        const testResponse = await fetch('https://ip.smartproxy.com/json');
-        if (!testResponse.ok) {
-          throw new Error(`Proxy test failed with status: ${testResponse.status}`);
-        }
+        // Save original global agents
+        const originalHttpsAgent = https.globalAgent;
+        const originalHttpAgent = http.globalAgent;
         
-        const proxyInfo = await testResponse.json();
-        console.log('SmartProxy connection successful. IP:', proxyInfo.ip);
+        // Set global agents to our proxy
+        https.globalAgent = proxyAgent as any;
+        http.globalAgent = proxyAgent as any;
         
         try {
-          // Try the standard transcript fetch first
-          console.log('Attempting standard transcript fetch');
-          const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId);
-          
-          if (!transcriptArray || transcriptArray.length === 0) {
-            throw new Error('No transcript available for this video.');
-          }
-          
-          const transcript = transcriptArray
-            .map((item: { text: string }) => item.text)
-            .join(' ');
-            
-          return transcript;
-        } catch (transcriptError) {
-          // The standard method failed, try an alternative approach with explicit cookies and headers
-          console.log('Standard transcript fetch failed, trying alternative method', transcriptError);
-          
-          // First, fetch the YouTube page to get cookies and other necessary tokens
-          const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-          
-          console.log('Fetching YouTube page with proxy...');
-          const videoPageResponse = await fetch(videoUrl, {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
-              'Accept-Language': 'en-US,en;q=0.9',
-              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache',
-              'Sec-Ch-Ua': '"Chromium";v="110", "Not A(Brand";v="24", "Google Chrome";v="110"',
-              'Sec-Ch-Ua-Mobile': '?0',
-              'Sec-Ch-Ua-Platform': '"Windows"',
-              'Sec-Fetch-Dest': 'document',
-              'Sec-Fetch-Mode': 'navigate',
-              'Sec-Fetch-Site': 'none',
-              'Sec-Fetch-User': '?1',
-              'Upgrade-Insecure-Requests': '1'
-            }
+          // Test the proxy connection
+          console.log('Testing proxy connection...');
+          const testResponse = await fetch('https://ip.smartproxy.com/json', {
+            signal: AbortSignal.timeout(10000) // 10 second timeout
           });
           
-          if (!videoPageResponse.ok) {
-            console.log(`Failed to fetch video page: ${videoPageResponse.status}`);
+          if (!testResponse.ok) {
+            throw new Error(`Proxy test failed with status: ${testResponse.status}`);
+          }
+          
+          const proxyInfo = await testResponse.json();
+          console.log('SmartProxy connection successful. IP:', proxyInfo.ip);
+          
+          // First, try using the YouTubeTranscript library
+          try {
+            console.log('Fetching transcript with global proxy agent...');
+            const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId);
             
-            // Let's try a fallback to directly use the local method but with a modified video ID
-            // This is a workaround for testing - if proxy isn't working properly
-            console.log('Attempting fallback to direct transcript fetch');
-            delete process.env.HTTP_PROXY;
-            delete process.env.HTTPS_PROXY;
+            if (!transcriptArray || transcriptArray.length === 0) {
+              throw new Error('No transcript available for this video.');
+            }
             
-            try {
-              const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId);
+            const transcript = transcriptArray
+              .map((item: { text: string }) => item.text)
+              .join(' ');
               
-              if (!transcriptArray || transcriptArray.length === 0) {
-                throw new Error('No transcript available for this video (fallback method).');
-              }
-              
-              const transcript = transcriptArray
-                .map((item: { text: string }) => item.text)
-                .join(' ');
-                
-              return transcript;
-            } catch (fallbackError) {
-              console.error('Fallback direct fetch also failed:', fallbackError);
+            return transcript;
+          } catch (transcriptError) {
+            console.error('Standard transcript fetch failed, trying direct YouTube API access...', transcriptError);
+            
+            // If the library fails, try a direct approach using fetch + proxy
+            const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+            
+            // Fetch the video page to get necessary cookies and tokens
+            const videoPageResponse = await fetch(videoUrl, {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+              },
+              signal: AbortSignal.timeout(15000)
+            });
+            
+            if (!videoPageResponse.ok) {
               throw new Error(`Failed to fetch video page: ${videoPageResponse.status}`);
             }
-          }
-          
-          // Get cookies from the response
-          const cookies = videoPageResponse.headers.get('set-cookie');
-          console.log('Cookies obtained:', cookies ? 'Yes' : 'No');
-          
-          // Get the page content to look for YouTube's client config variables
-          const pageContent = await videoPageResponse.text();
-          console.log(`Page content received: ${pageContent.length} characters`);
-          
-          // Try another endpoint that might provide captions/transcript
-          console.log('Trying YouTube timedtext API...');
-          
-          // Try multiple languages if the first one doesn't work
-          const languages = ['en', 'en-US', 'en-GB', 'auto', ''];
-          
-          for (const lang of languages) {
-            try {
-              // Try a direct request to the transcript endpoint with these cookies
-              const transcriptApiUrl = `https://www.youtube.com/api/timedtext?v=${videoId}&lang=${lang}`;
-              console.log(`Trying transcript API with lang=${lang}`);
-              
-              const transcriptResponse = await fetch(transcriptApiUrl, {
-                headers: {
-                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
-                  'Accept-Language': 'en-US,en;q=0.9',
-                  'Accept': '*/*',
-                  'Cookie': cookies || '',
-                  'Referer': videoUrl
-                }
-              });
-              
-              if (!transcriptResponse.ok) {
-                console.log(`API attempt with lang=${lang} failed: ${transcriptResponse.status}`);
-                continue;
-              }
-              
-              // Process the transcript response
-              const transcriptData = await transcriptResponse.text();
-              console.log(`Transcript data received: ${transcriptData.length} characters`);
-              
-              // If we successfully got something, return it
-              if (transcriptData && transcriptData.length > 0) {
-                // Simple processing - might need to be adjusted based on the actual response format
-                console.log('Alternative transcript fetch succeeded');
+            
+            // Try to find the caption tracks in the YouTube page response
+            const html = await videoPageResponse.text();
+            const captionTracksMatch = html.match(/"captionTracks":\s*(\[.*?\])(?=,)/);
+            
+            if (captionTracksMatch && captionTracksMatch[1]) {
+              try {
+                const captionTracks = JSON.parse(captionTracksMatch[1]);
                 
-                // Try to parse XML if we got XML response
-                if (transcriptData.includes('<transcript>') || transcriptData.includes('<text')) {
-                  // Very basic XML parsing for demonstration
-                  const textMatches = transcriptData.match(/<text[^>]*>(.*?)<\/text>/g) || [];
+                if (captionTracks && captionTracks.length) {
+                  // Get the first English track or just the first track
+                  const track = captionTracks.find((t: any) => 
+                    t.languageCode && (t.languageCode.includes('en') || t.name.simpleText.includes('English'))
+                  ) || captionTracks[0];
                   
-                  if (textMatches.length > 0) {
-                    console.log(`Found ${textMatches.length} text elements in XML`);
-                    const transcript = textMatches
-                      .map(match => {
-                        // Extract text content from the XML tags
-                        const content = match.replace(/<[^>]*>/g, '');
-                        // Decode HTML entities
-                        return content.replace(/&amp;/g, '&')
-                          .replace(/&lt;/g, '<')
-                          .replace(/&gt;/g, '>')
-                          .replace(/&quot;/g, '"')
-                          .replace(/&#39;/g, "'");
-                      })
-                      .join(' ');
+                  if (track && track.baseUrl) {
+                    console.log(`Found caption track: ${track.name?.simpleText || 'Unnamed'}`);
                     
-                    if (transcript.length > 0) {
-                      return transcript;
+                    // Fetch the actual transcript data
+                    const captionResponse = await fetch(track.baseUrl, {
+                      signal: AbortSignal.timeout(10000)
+                    });
+                    
+                    if (!captionResponse.ok) {
+                      throw new Error(`Failed to fetch caption data: ${captionResponse.status}`);
                     }
-                  }
-                }
-                
-                // If it wasn't XML or parsing failed, let's check if we got JSON
-                try {
-                  const jsonData = JSON.parse(transcriptData);
-                  if (jsonData && typeof jsonData === 'object') {
-                    console.log('Received JSON data for transcript');
-                    // Extract the text content based on the JSON format (this will depend on YouTube's API format)
-                    // This is a simplistic example and may need adjustment
-                    if (jsonData.events) {
-                      const transcript = jsonData.events
-                        .filter((event: any) => event.segs && event.segs.length)
-                        .map((event: any) => 
-                          event.segs.map((seg: any) => seg.utf8).join(' ')
-                        )
-                        .join(' ');
-                      
-                      if (transcript.length > 0) {
-                        return transcript;
-                      }
-                    }
-                  }
-                } catch (jsonError) {
-                  console.log('Not a JSON response', jsonError);
-                }
-                
-                // Last resort: Return some excerpt of the raw text if it's not too long
-                if (transcriptData.length < 5000) {
-                  return `Transcript data retrieved but format handling needed: ${transcriptData.substring(0, 500)}...`;
-                } else {
-                  return `Transcript data retrieved but too large to return directly (${transcriptData.length} chars)`;
-                }
-              }
-            } catch (langError) {
-              console.log(`Error trying language ${lang}:`, langError);
-            }
-          }
-          
-          // If we've tried all languages but got here, try one final approach - extract from page content
-          console.log('Trying to extract transcript data from page content...');
-          
-          // Look for the captionTracks in the YouTube player response
-          const captionTracksMatch = pageContent.match(/"captionTracks":\s*(\[.*?\])(?=,)/);
-          if (captionTracksMatch && captionTracksMatch[1]) {
-            try {
-              const captionTracks = JSON.parse(captionTracksMatch[1]);
-              if (captionTracks && captionTracks.length) {
-                // Get the first English track or any track if no English
-                const track = captionTracks.find((t: any) => 
-                  t.languageCode && (t.languageCode.includes('en') || t.name.simpleText.includes('English'))
-                ) || captionTracks[0];
-                
-                if (track && track.baseUrl) {
-                  console.log('Found caption track URL in page content, fetching...');
-                  const captionResponse = await fetch(track.baseUrl);
-                  if (captionResponse.ok) {
+                    
+                    // Process the XML transcript data
                     const captionData = await captionResponse.text();
-                    
-                    // Basic XML parsing for caption data
                     const textMatches = captionData.match(/<text[^>]*>(.*?)<\/text>/g) || [];
                     
                     if (textMatches.length > 0) {
-                      console.log(`Found ${textMatches.length} text elements in captions`);
+                      console.log(`Found ${textMatches.length} caption segments`);
+                      
                       const transcript = textMatches
-                        .map(match => {
-                          // Extract text content from the XML tags
+                        .map((match: string) => {
+                          // Extract text content and decode HTML entities
                           const content = match.replace(/<[^>]*>/g, '');
-                          // Decode HTML entities
                           return content.replace(/&amp;/g, '&')
                             .replace(/&lt;/g, '<')
                             .replace(/&gt;/g, '>')
@@ -422,24 +306,92 @@ async function getTranscript(videoId: string): Promise<string> {
                     }
                   }
                 }
+              } catch (parseError) {
+                console.error('Error parsing caption tracks:', parseError);
               }
-            } catch (captionParseError) {
-              console.log('Error parsing caption tracks:', captionParseError);
             }
+            
+            // If we couldn't extract captions from the page, try the timedtext API directly
+            try {
+              // Try different language codes
+              for (const lang of ['en', 'en-US', '']) {
+                try {
+                  const timedTextUrl = `https://www.youtube.com/api/timedtext?v=${videoId}&lang=${lang}`;
+                  
+                  const timedTextResponse = await fetch(timedTextUrl, {
+                    headers: {
+                      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36',
+                      'Referer': videoUrl
+                    },
+                    signal: AbortSignal.timeout(10000)
+                  });
+                  
+                  if (!timedTextResponse.ok) {
+                    console.log(`Failed to fetch timedtext with lang=${lang}: ${timedTextResponse.status}`);
+                    continue;
+                  }
+                  
+                  const textData = await timedTextResponse.text();
+                  
+                  if (textData && textData.includes('<text')) {
+                    // Process XML format
+                    const textMatches = textData.match(/<text[^>]*>(.*?)<\/text>/g) || [];
+                    
+                    if (textMatches.length > 0) {
+                      const transcript = textMatches
+                        .map((match: string) => {
+                          const content = match.replace(/<[^>]*>/g, '');
+                          return content.replace(/&amp;/g, '&')
+                            .replace(/&lt;/g, '<')
+                            .replace(/&gt;/g, '>')
+                            .replace(/&quot;/g, '"')
+                            .replace(/&#39;/g, "'");
+                        })
+                        .join(' ');
+                      
+                      if (transcript.length > 0) {
+                        return transcript;
+                      }
+                    }
+                  }
+                } catch (langError) {
+                  console.log(`Failed to fetch transcript with language ${lang}:`, langError);
+                }
+              }
+            } catch (timedTextError) {
+              console.error('Error fetching from timedtext API:', timedTextError);
+            }
+            
+            // If we get here, all methods have failed
+            throw new Error('Failed to extract transcript with any method. The video may not have captions available.');
           }
-          
-          // If we got here, all methods failed
-          throw new Error('All transcript extraction methods failed. The video may not have available transcripts or YouTube is blocking access.');
+        } finally {
+          // Restore the original agents regardless of success/failure
+          https.globalAgent = originalHttpsAgent;
+          http.globalAgent = originalHttpAgent;
         }
       } catch (error) {
-        // Type assertion for the error to handle message property
-        const err = error as Error;
-        console.error('SmartProxy error:', err.message);
-        throw new Error(`Failed to fetch transcript through SmartProxy: ${err.message}`);
-      } finally {
-        // Clean up the environment variables when done
-        delete process.env.HTTP_PROXY;
-        delete process.env.HTTPS_PROXY;
+        console.error('SmartProxy error:', error);
+        
+        // Final fallback: try without proxy
+        console.log('Trying fallback without proxy...');
+        
+        try {
+          const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId);
+          
+          if (!transcriptArray || transcriptArray.length === 0) {
+            throw new Error('No transcript available for this video.');
+          }
+          
+          const transcript = transcriptArray
+            .map((item: { text: string }) => item.text)
+            .join(' ');
+            
+          return transcript;
+        } catch (fallbackError) {
+          console.error('Fallback transcript fetch failed:', fallbackError);
+          throw new Error(`Failed to fetch transcript: ${error instanceof Error ? error.message : String(error)}`);
+        }
       }
     } else {
       // Standard approach for local development
