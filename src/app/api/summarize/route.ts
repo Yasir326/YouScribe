@@ -184,18 +184,59 @@ function extractVideoId(url: string): string | null {
 
 async function getTranscript(videoId: string): Promise<string> {
   try {
-    const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId);
+    // For production environments, use SmartProxy if configured
+    if (process.env.NODE_ENV === 'production' && process.env.SMARTPROXY_USERNAME && process.env.SMARTPROXY_PASSWORD) {
+      console.log('Using SmartProxy for YouTube transcript fetch');
+      
+      // Set up HTTP_PROXY environment variable for Node.js
+      // Node.js native fetch and many libraries respect this environment variable
+      process.env.HTTP_PROXY = `http://${process.env.SMARTPROXY_USERNAME}:${process.env.SMARTPROXY_PASSWORD}@gate.smartproxy.com:10001`;
+      
+      try {
+        // With HTTP_PROXY set, standard fetch will use the proxy
+        const testResponse = await fetch('https://ip.smartproxy.com/json');
+        if (!testResponse.ok) {
+          throw new Error(`Proxy test failed with status: ${testResponse.status}`);
+        }
+        
+        const proxyInfo = await testResponse.json();
+        console.log('SmartProxy connection successful. IP:', proxyInfo.ip);
+        
+        // Now use YoutubeTranscript normally - it will use the proxy automatically
+        const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId);
+        
+        if (!transcriptArray || transcriptArray.length === 0) {
+          throw new Error('No transcript available for this video.');
+        }
+        
+        const transcript = transcriptArray
+          .map((item: { text: string }) => item.text)
+          .join(' ');
+          
+        return transcript;
+      } catch (error) {
+        // Type assertion for the error to handle message property
+        const err = error as Error;
+        console.error('SmartProxy error:', err.message);
+        throw new Error(`Failed to fetch transcript through SmartProxy: ${err.message}`);
+      } finally {
+        // Clean up the environment variable when done
+        delete process.env.HTTP_PROXY;
+      }
+    } else {
+      // Standard approach for local development
+      const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId);
 
-    if (!transcriptArray || transcriptArray.length === 0) {
-      throw new Error('No transcript available for this video.');
+      if (!transcriptArray || transcriptArray.length === 0) {
+        throw new Error('No transcript available for this video.');
+      }
+
+      const transcript = transcriptArray
+        .map((item: { text: string }) => item.text)
+        .join(' ');
+
+      return transcript;
     }
-
-   
-    const transcript = transcriptArray
-      .map((item: { text: string }) => item.text)
-      .join(' ');
-
-    return transcript;
   } catch (error: any) {
     console.error('Error fetching transcript:', error);
     throw new Error(`Failed to fetch transcript: ${error.message}`);

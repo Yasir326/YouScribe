@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/reset-quotas?api_key=N83onSAdeVyUskfNovhxZ3iYVyWyf44EjSZs30uTTKA=",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}
