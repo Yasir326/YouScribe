@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { HttpsProxyAgent } from 'https-proxy-agent';
-const proxyAgent = new HttpsProxyAgent(`https://${process.env.SMARTPROXY_USERNAME}:${process.env.SMARTPROXY_PASSWORD}@us.smartproxy.com:10000`);
+const proxyAgent = new HttpsProxyAgent(`http://${process.env.SMARTPROXY_USERNAME}:${process.env.SMARTPROXY_PASSWORD}@us.smartproxy.com:10000`);
 const originalFetch = globalThis.fetch.bind(globalThis);
 globalThis.fetch = (url: any, options: any = {}) => {
   const needsProxy = typeof url === 'string' && url.includes('youtube.com');
