@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ProxyAgent, setGlobalDispatcher } from 'undici';
-const proxyAgent = new ProxyAgent(`http://${process.env.SMARTPROXY_USERNAME}:${process.env.SMARTPROXY_PASSWORD}@us.smartproxy.com:10000`);
+const proxyAgent = new ProxyAgent(`https://${process.env.SMARTPROXY_USERNAME}:${process.env.SMARTPROXY_PASSWORD}@us.smartproxy.com:10000`);
 setGlobalDispatcher(proxyAgent);
 
 import { NextRequest, NextResponse } from 'next/server';
