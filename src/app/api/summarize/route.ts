@@ -1,7 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ProxyAgent, setGlobalDispatcher } from 'undici';
-const proxyAgent = new ProxyAgent(`https://${process.env.SMARTPROXY_USERNAME}:${process.env.SMARTPROXY_PASSWORD}@us.smartproxy.com:10000`);
-setGlobalDispatcher(proxyAgent);
+import { HttpsProxyAgent } from 'https-proxy-agent';
+const proxyAgent = new HttpsProxyAgent(`https://${process.env.SMARTPROXY_USERNAME}:${process.env.SMARTPROXY_PASSWORD}@us.smartproxy.com:10000`);
+const originalFetch = globalThis.fetch.bind(globalThis);
+globalThis.fetch = (url: any, options: any = {}) => {
+  const needsProxy = typeof url === 'string' && url.includes('youtube.com');
+  const opts = needsProxy ? { ...options, agent: proxyAgent } : options;
+  return originalFetch(url, opts);
+};
 
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
