@@ -4,7 +4,6 @@ import OpenAI from 'openai';
 import { YoutubeTranscript } from 'youtube-transcript';
 import { db } from '@/src/db';
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
-import axios from 'axios';
 import { ProxyAgent, setGlobalDispatcher } from 'undici';
 
 // Force this route to be dynamic and bypass caching
@@ -185,31 +184,10 @@ function extractVideoId(url: string): string | null {
 }
 
 async function getTranscript(videoId: string): Promise<string> {
-  try {
-    // For production environments, check if custom HTTP_PROXY is set
-    if (process.env.NODE_ENV === 'production' && process.env.HTTP_PROXY) {
-      console.log('Using proxy for YouTube transcript fetch');
-      
-      const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+  try {      
       const proxyAgent = new ProxyAgent(
-        `https://${process.env.SMARTPROXY_USERNAME}:${process.env.SMARTPROXY_PASSWORD}@us.smartproxy.com:10000`);
+        `http://${process.env.SMARTPROXY_USERNAME}:${process.env.SMARTPROXY_PASSWORD}@us.smartproxy.com:10000`);
         setGlobalDispatcher(proxyAgent);
-      
-      try {
-        // Test proxy connection
-        console.log('Testing proxy connection with axios...');
-        const response = await axios.get(videoUrl, {
-          httpsAgent: proxyAgent,
-          timeout: 15000
-        });
-        
-        // If proxy connection is successful, we can proceed with transcript fetch
-        console.log('Proxy connection successful:', response.status, response.statusText);
-        
-        // Set HTTP_PROXY environment variable for YoutubeTranscript library
-        const proxyUrl = `https://${process.env.SMARTPROXY_USERNAME}:${process.env.SMARTPROXY_PASSWORD}@us.smartproxy.com:10000`;
-        const originalHttpProxy = process.env.HTTP_PROXY;
-        process.env.HTTP_PROXY = proxyUrl;
         
         try {
           // Use YoutubeTranscript with our configured proxy
@@ -224,17 +202,9 @@ async function getTranscript(videoId: string): Promise<string> {
             .join(' ');
             
           return transcript;
-        } finally {
-          // Reset HTTP_PROXY to its original value
-          if (originalHttpProxy) {
-            process.env.HTTP_PROXY = originalHttpProxy;
-          } else {
-            delete process.env.HTTP_PROXY;
-          }
-        }
-      } catch (error) {
-        console.error('Error with proxy:', error);
-        
+        } catch (error) {
+          console.error('Error with proxy:', error);
+          
         // Try a direct approach as a fallback
         try {
           console.log('Trying to fetch transcript directly...');
@@ -252,21 +222,7 @@ async function getTranscript(videoId: string): Promise<string> {
         } catch (fallbackError: any) {
           console.error('Fallback attempt also failed:', fallbackError.message);
           throw new Error(`Failed to fetch transcript: ${error instanceof Error ? error.message : String(error)}`);
-        }
       }
-    } else {
-      // Standard approach for local development
-      const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId);
-
-      if (!transcriptArray || transcriptArray.length === 0) {
-        throw new Error('No transcript available for this video.');
-      }
-
-      const transcript = transcriptArray
-        .map((item: { text: string }) => item.text)
-        .join(' ');
-
-      return transcript;
     }
   } catch (error: any) {
     console.error('Error fetching transcript:', error);
