@@ -2,7 +2,7 @@
 import { HttpsProxyAgent } from 'https-proxy-agent';
 
 const proxyAgent = new HttpsProxyAgent(
-  `https://${process.env.SMARTPROXY_USERNAME}:${process.env.SMARTPROXY_PASSWORD}@gate.decodo.com:10001`
+  `https://${process.env.SMARTPROXY_USERNAME}:${process.env.SMARTPROXY_PASSWORD}@gate.decodo.com:30001`
 );
 
 const originalFetch = globalThis.fetch.bind(globalThis);
