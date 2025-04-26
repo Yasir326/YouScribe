@@ -1,13 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { HttpsProxyAgent } from 'https-proxy-agent';
-const proxyAgent = new HttpsProxyAgent(`http://${process.env.SMARTPROXY_USERNAME}:${process.env.SMARTPROXY_PASSWORD}@us.smartproxy.com:10000`);
+
+const proxyAgent = new HttpsProxyAgent(
+  `https://${process.env.SMARTPROXY_USERNAME}:${process.env.SMARTPROXY_PASSWORD}@gate.decodo.com:10001`
+);
+
 const originalFetch = globalThis.fetch.bind(globalThis);
+
 globalThis.fetch = (url: any, options: any = {}) => {
   const needsProxy = typeof url === 'string' && url.includes('youtube.com');
   const opts = needsProxy ? { ...options, agent: proxyAgent } : options;
   return originalFetch(url, opts);
 };
-
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { YoutubeTranscript } from 'youtube-transcript';
