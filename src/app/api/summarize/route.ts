@@ -5,7 +5,7 @@ import { YoutubeTranscript } from 'youtube-transcript';
 import { db } from '@/src/db';
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
 import axios from 'axios';
-import { HttpsProxyAgent } from 'https-proxy-agent';
+import { ProxyAgent, setGlobalDispatcher } from 'undici';
 
 // Force this route to be dynamic and bypass caching
 export const dynamic = 'force-dynamic';
@@ -191,8 +191,9 @@ async function getTranscript(videoId: string): Promise<string> {
       console.log('Using proxy for YouTube transcript fetch');
       
       const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-      const proxyAgent = new HttpsProxyAgent(
+      const proxyAgent = new ProxyAgent(
         `https://${process.env.SMARTPROXY_USERNAME}:${process.env.SMARTPROXY_PASSWORD}@us.smartproxy.com:10000`);
+        setGlobalDispatcher(proxyAgent);
       
       try {
         // Test proxy connection
