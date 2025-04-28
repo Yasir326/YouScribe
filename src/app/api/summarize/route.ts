@@ -115,7 +115,7 @@ function extractVideoId(url: string): string | null {
 }
 
 async function getTranscript(videoId: string): Promise<string> {
-  const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId, { useProxy: true });
+  const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId);
   if (!transcriptArray || transcriptArray.length === 0) {
     throw new Error('No transcript available for this video.');
   }
