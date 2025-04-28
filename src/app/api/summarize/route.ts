@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let openai: OpenAI;
+    let openai: any;
     try {
       openai = new OpenAI({ apiKey: dbUser.openaiApiKey });
     } catch (apiError) {
@@ -68,7 +68,13 @@ export async function POST(req: NextRequest) {
 
     let transcript: string;
     try {
-      transcript = await getTranscript(videoId);
+      // Call our improved YouTube transcript fetcher
+      // This now handles proxy ONLY on server-side, never in browser
+      const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId, { useProxy: true });
+      if (!transcriptArray || transcriptArray.length === 0) {
+        throw new Error('No transcript available for this video.');
+      }
+      transcript = transcriptArray.map(item => item.text).join(' ');
     } catch (transcriptError: any) {
       console.error('Transcript fetch error:', transcriptError);
       return NextResponse.json({ error: transcriptError.message }, { status: 400 });
@@ -114,15 +120,7 @@ function extractVideoId(url: string): string | null {
   return match ? match[1] : null;
 }
 
-async function getTranscript(videoId: string): Promise<string> {
-  const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId);
-  if (!transcriptArray || transcriptArray.length === 0) {
-    throw new Error('No transcript available for this video.');
-  }
-  return transcriptArray.map(item => item.text).join(' ');
-}
-
-async function generateSummary(transcript: string, userTier: string, openai: OpenAI, quickMode: boolean = false): Promise<string> {
+async function generateSummary(transcript: string, userTier: string, openai: any, quickMode: boolean = false): Promise<string> {
   const modelsByTier = {
     'Basic': ['gpt-3.5-turbo'],
     'Plus': ['gpt-4o-mini', 'gpt-3.5-turbo'],

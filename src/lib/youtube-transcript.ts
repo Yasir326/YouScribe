@@ -1,5 +1,6 @@
+import axios, { AxiosRequestConfig } from 'axios';
 import { HttpsProxyAgent } from 'https-proxy-agent';
-import axios from 'axios';
+import { HttpProxyAgent } from 'http-proxy-agent';
 
 const RE_YOUTUBE =
   /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
@@ -8,24 +9,36 @@ const USER_AGENT =
 const RE_XML_TRANSCRIPT =
   /<text start="([^"]*)" dur="([^"]*)">([^<]*)<\/text>/g;
 
-  // Get environment variables without direct process.env usage, to work in browser environments
+// This will track whether we're in server or browser environment
+const isServer = typeof window === 'undefined';
+
+// Get environment variables safely (SERVER-SIDE ONLY)
 const getEnv = (name: string): string => {
-  return (typeof window === 'undefined' ? 
-    process?.env?.[name] : undefined) || '';
+  if (!isServer) return '';
+  
+  try {
+    return process?.env?.[name] || '';
+  } catch {
+    return '';
+  }
 };
 
-// Get proxy credentials
-const SMARTPROXY_USERNAME = getEnv('SMARTPROXY_USERNAME') ?? process.env.SMARTPROXY_USERNAME;
-const SMARTPROXY_PASSWORD = getEnv('SMARTPROXY_PASSWORD') ?? process.env.SMARTPROXY_PASSWORD;
+// Get proxy credentials (SERVER-SIDE ONLY)
+const SMARTPROXY_USERNAME = getEnv('SMARTPROXY_USERNAME');
+const SMARTPROXY_PASSWORD = getEnv('SMARTPROXY_PASSWORD');
+const SMARTPROXY_HOST = 'gate.decodo.com';
+const SMARTPROXY_PORT = '10010';
 
-// Initialize proxy agent using environment variables
-// Use HTTP protocol instead of HTTPS for the proxy URL as per SmartProxy requirements
-const proxyAgent = SMARTPROXY_USERNAME && SMARTPROXY_PASSWORD
-  ? new HttpsProxyAgent(`http://${SMARTPROXY_USERNAME}:${SMARTPROXY_PASSWORD}@gate.decodo.com:10001`)
-  : undefined;
+// Create proxy URL (SERVER-SIDE ONLY)
+const proxyUrl = 
+  isServer && SMARTPROXY_USERNAME && SMARTPROXY_PASSWORD
+    ? `http://${SMARTPROXY_USERNAME}:${SMARTPROXY_PASSWORD}@${SMARTPROXY_HOST}:${SMARTPROXY_PORT}`
+    : null;
 
-// Debug proxy configuration
-console.log('Proxy configuration initialized:', SMARTPROXY_USERNAME ? 'Username configured' : 'No username', SMARTPROXY_PASSWORD ? 'Password configured' : 'No password');
+// Log proxy configuration status (but only on server side)
+if (isServer) {
+  console.log(`[YouTube Transcript] Proxy ${proxyUrl ? 'configured' : 'not configured'}`);
+}
 
 export class YoutubeTranscriptError extends Error {
   constructor(message: string) {
@@ -96,25 +109,32 @@ export class YoutubeTranscript {
   ): Promise<TranscriptResponse[]> {
     const identifier = this.retrieveVideoId(videoId);
     
-    // Use proxy for YouTube requests if specified or default to true
-    const useProxy = config?.useProxy !== false;
+    // IMPORTANT: Browser check - NEVER use proxy in browser context
+    // This prevents 407 authentication errors in the browser
+    const useProxy = isServer && config?.useProxy !== false && proxyUrl !== null;
     
     // Configure axios request options
-    const requestConfig = {
+    const requestConfig: AxiosRequestConfig = {
       headers: {
         ...(config?.lang && { 'Accept-Language': config.lang }),
         'User-Agent': USER_AGENT,
       },
-      // Add proxy agent if proxy is enabled and agent is available
-      ...(useProxy && proxyAgent ? { httpsAgent: proxyAgent } : {}),
-      // Increase timeout for proxy requests
-      timeout: 10000 
+      timeout: 15000
     };
+    
+    // Only configure proxy on server-side
+    if (useProxy && proxyUrl) {
+      try {
+        requestConfig.httpsAgent = new HttpsProxyAgent(proxyUrl);
+        requestConfig.httpAgent = new HttpProxyAgent(proxyUrl);
+        
+        console.log(`[YouTube Transcript] Fetching video ${identifier} with proxy`);
+      } catch (error) {
+        console.error('[YouTube Transcript] Error setting up proxy:', error);
+      }
+    }
 
     try {
-      // Log request configuration
-      console.log('Making YouTube request to:', `https://www.youtube.com/watch?v=${identifier}`);
-      
       // Using axios to fetch the video page
       const videoPageResponse = await axios.get(
         `https://www.youtube.com/watch?v=${identifier}`, 
@@ -140,7 +160,7 @@ export class YoutubeTranscript {
             splittedHTML[1].split(',"videoDetails')[0].replace('\n', '')
           );
         } catch (e) {
-          console.error(e);
+          console.error('[YouTube Transcript] JSON parse error:', e);
           return undefined;
         }
       })()?.['playerCaptionsTracklistRenderer'];
@@ -174,8 +194,6 @@ export class YoutubeTranscript {
           : captions.captionTracks[0]
       ).baseUrl;
 
-      console.log('Fetching transcript from URL:', transcriptURL.substring(0, 50) + '...');
-      
       // Using axios with the same proxy configuration for transcript request
       const transcriptResponse = await axios.get(transcriptURL, requestConfig);
       
@@ -199,21 +217,41 @@ export class YoutubeTranscript {
         }
       }
       
-      console.log(`Successfully fetched ${transcriptItems.length} transcript items`);
+      if (isServer) {
+        console.log(`[YouTube Transcript] Successfully fetched ${transcriptItems.length} transcript items`);
+      }
       return transcriptItems;
     } catch (error) {
       // Handle axios errors
       if (axios.isAxiosError(error)) {
-        console.error('Axios error details:', {
-          message: error.message,
-          code: error.code,
-          status: error.response?.status,
-          statusText: error.response?.statusText,
-          headers: error.response?.headers,
-        });
-        throw new YoutubeTranscriptError(`Error fetching transcript: ${error.message}`);
+        const status = error.response?.status;
+        const data = error.response?.data;
+        
+        if (isServer) {
+          console.error('[YouTube Transcript] Request failed:', {
+            message: error.message,
+            url: error.config?.url,
+            status,
+            data: typeof data === 'string' ? data.substring(0, 100) + '...' : data
+          });
+        }
+        
+        // Better error messages based on status code
+        if (status === 407) {
+          throw new YoutubeTranscriptError('Proxy authentication failed. This should only happen on server-side.');
+        } else if (status === 403) {
+          throw new YoutubeTranscriptError('Access denied by YouTube. Your IP may be blocked.');
+        } else if (status === 429) {
+          throw new YoutubeTranscriptTooManyRequestError();
+        }
+        
+        throw new YoutubeTranscriptError(`Request failed: ${error.message}`);
       }
-      // Re-throw other errors
+      
+      // Log and re-throw other errors
+      if (isServer) {
+        console.error('[YouTube Transcript] Non-Axios error:', error);
+      }
       throw error;
     }
   }
