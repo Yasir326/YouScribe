@@ -4,5 +4,22 @@
       "path": "/api/cron/reset-quotas?api_key=N83onSAdeVyUskfNovhxZ3iYVyWyf44EjSZs30uTTKA=",
       "schedule": "0 0 * * *"
     }
+  ],
+  "functions": {
+    "src/app/api/**/*": {
+      "memory": 1024,
+      "maxDuration": 90
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    }
   ]
 }
