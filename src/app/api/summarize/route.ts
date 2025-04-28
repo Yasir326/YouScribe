@@ -1,20 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { HttpsProxyAgent } from 'https-proxy-agent';
-
-const proxyAgent = new HttpsProxyAgent(
-  `https://${process.env.SMARTPROXY_USERNAME}:${process.env.SMARTPROXY_PASSWORD}@gate.decodo.com:30001`
-);
-
-const originalFetch = globalThis.fetch.bind(globalThis);
-
-globalThis.fetch = (url: any, options: any = {}) => {
-  const needsProxy = typeof url === 'string' && url.includes('youtube.com');
-  const opts = needsProxy ? { ...options, agent: proxyAgent } : options;
-  return originalFetch(url, opts);
-};
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { YoutubeTranscript } from 'youtube-transcript';
+import { YoutubeTranscript } from '@/src/lib/youtube-transcript';
 import { db } from '@/src/db';
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
 
@@ -128,7 +115,7 @@ function extractVideoId(url: string): string | null {
 }
 
 async function getTranscript(videoId: string): Promise<string> {
-  const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId);
+  const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId, { useProxy: true });
   if (!transcriptArray || transcriptArray.length === 0) {
     throw new Error('No transcript available for this video.');
   }
@@ -179,4 +166,4 @@ async function generateSummary(transcript: string, userTier: string, openai: Ope
     }
   }
   throw new Error('Failed to generate summary.');
-}
+} 
