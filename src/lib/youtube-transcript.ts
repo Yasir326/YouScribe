@@ -1,12 +1,12 @@
+import { HttpsProxyAgent } from 'https-proxy-agent';
+import axios from 'axios';
+
 const RE_YOUTUBE =
   /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
 const USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36,gzip(gfe)';
 const RE_XML_TRANSCRIPT =
   /<text start="([^"]*)" dur="([^"]*)">([^<]*)<\/text>/g;
-
-import { HttpsProxyAgent } from 'https-proxy-agent';
-import axios from 'axios';
 
   // Get environment variables without direct process.env usage, to work in browser environments
 const getEnv = (name: string): string => {
