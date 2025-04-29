@@ -122,6 +122,8 @@ interface LogData {
   matchFound?: boolean;
   matchLength?: number;
   matchContent?: string | null;
+  responsePreview?: string;
+  pattern?: string;
 }
 
 /**
@@ -240,6 +242,16 @@ export class YoutubeTranscript {
           headers: {
             ...(config?.lang && { 'Accept-Language': config.lang }),
             'User-Agent': USER_AGENT,
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+            'Cache-Control': 'max-age=0'
           },
         }),
         timeoutPromise
@@ -253,10 +265,29 @@ export class YoutubeTranscript {
         bodyLength: videoPageBody.length,
         hasCaptions: videoPageBody.includes('"captions":'),
         hasVideoDetails: videoPageBody.includes('"videoDetails":'),
-        hasRecaptcha: videoPageBody.includes('class="g-recaptcha"')
+        hasRecaptcha: videoPageBody.includes('class="g-recaptcha"'),
+        responsePreview: videoPageBody.substring(0, 500) + '...'
       });
 
-      const captionsMatch = videoPageBody.match(/"captions":(.*?),"videoDetails/);
+      // Try multiple patterns to find captions
+      const captionsPatterns = [
+        /"captions":(.*?),"videoDetails"/,
+        /"captions":(.*?)},"videoDetails"/
+      ];
+
+      let captionsMatch = null;
+      for (const pattern of captionsPatterns) {
+        captionsMatch = videoPageBody.match(pattern);
+        if (captionsMatch) {
+          this.log('Found captions with pattern', { 
+            videoId,
+            pattern: pattern.toString(),
+            matchLength: captionsMatch.length
+          });
+          break;
+        }
+      }
+
       this.log('Captions match result', { 
         videoId,
         matchFound: !!captionsMatch,
