@@ -246,7 +246,7 @@ export class YoutubeTranscript {
       const proxyAgent =
         useProxy && SMARTPROXY_USERNAME && SMARTPROXY_PASSWORD
           ? new HttpsProxyAgent(
-              `http://${SMARTPROXY_USERNAME}:${SMARTPROXY_PASSWORD}@${SMARTPROXY_HOST}:${SMARTPROXY_PORT}`
+              `https://${SMARTPROXY_USERNAME}:${SMARTPROXY_PASSWORD}@${SMARTPROXY_HOST}:${SMARTPROXY_PORT}`
             )
           : undefined;
 
