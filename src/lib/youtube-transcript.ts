@@ -192,6 +192,7 @@ export class YoutubeTranscript {
         ? new HttpsProxyAgent(`http://${SMARTPROXY_USERNAME}:${SMARTPROXY_PASSWORD}@${SMARTPROXY_HOST}:${SMARTPROXY_PORT}`)
         : undefined;
 
+        console.log('=====> block 1')
       // Race the fetch against the timeout
       const videoPageResponse = await Promise.race([
         axios.get(`https://www.youtube.com/watch?v=${videoId}`, {
@@ -205,6 +206,8 @@ export class YoutubeTranscript {
       ]) as { data: string; status: number };
         
       const videoPageBody = videoPageResponse.data;
+
+      console.log('=====> block 2')
       
       // Extract captions data more efficiently
       const captionsMatch = videoPageBody.match(/"captions":(.*?),"videoDetails/);
@@ -218,6 +221,8 @@ export class YoutubeTranscript {
         throw new YoutubeTranscriptDisabledError(videoId);
       }
 
+      console.log('=====> block 3')
+
       // Parse only the captions section, not the entire response
       let captions;
       try {
@@ -226,6 +231,8 @@ export class YoutubeTranscript {
         console.error('[YouTube Transcript] JSON parse error:', e);
         throw new YoutubeTranscriptDisabledError(videoId);
       }
+
+      console.log('=====> block 4')
 
       if (!captions || !('captionTracks' in captions)) {
         throw new YoutubeTranscriptNotAvailableError(videoId);
