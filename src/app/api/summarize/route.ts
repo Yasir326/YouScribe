@@ -100,9 +100,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid YouTube URL' }, { status: 400 });
     }
 
+    console.log(`[Summarize] Processing video: ${videoId} in ${isDevelopment ? 'development' : 'production'} mode`);
+
     // Fetch transcript with improved performance
     let transcript: string;
     try {
+      console.log(`[Summarize] Fetching transcript for ${videoId} with config:`, {
+        useProxy: !isDevelopment,
+        skipCache: isDevelopment,
+        forceNoProxy: isDevelopment
+      });
+
       const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId, { 
         useProxy: !isDevelopment,
         skipCache: isDevelopment,
@@ -110,13 +118,22 @@ export async function POST(req: NextRequest) {
       });
       
       if (!transcriptArray || transcriptArray.length === 0) {
+        console.error(`[Summarize] No transcript available for video ${videoId}`);
         throw new Error('No transcript available for this video.');
       }
+      
+      console.log(`[Summarize] Successfully fetched ${transcriptArray.length} transcript items for ${videoId}`);
       
       // Join all transcript items directly, more efficiently
       transcript = transcriptArray.map(item => item.text).join(' ');
     } catch (transcriptError: any) {
-      console.error('Transcript fetch error:', transcriptError);
+      console.error('[Summarize] Transcript fetch error:', {
+        error: transcriptError.message,
+        videoId,
+        stack: transcriptError.stack,
+        status: transcriptError.response?.status,
+        data: transcriptError.response?.data
+      });
       return NextResponse.json({ error: transcriptError.message }, { status: 400 });
     }
 

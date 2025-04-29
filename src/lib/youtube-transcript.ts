@@ -116,6 +116,12 @@ interface LogData {
   firstItem?: TranscriptResponse;
   parseError?: unknown;
   captionsMatch?: RegExpMatchArray | null;
+  hasCaptions?: boolean;
+  hasVideoDetails?: boolean;
+  hasRecaptcha?: boolean;
+  matchFound?: boolean;
+  matchLength?: number;
+  matchContent?: string | null;
 }
 
 /**
@@ -244,11 +250,20 @@ export class YoutubeTranscript {
       this.log('Video page fetched', { 
         videoId, 
         status: videoPageResponse.status,
-        bodyLength: videoPageBody.length 
+        bodyLength: videoPageBody.length,
+        hasCaptions: videoPageBody.includes('"captions":'),
+        hasVideoDetails: videoPageBody.includes('"videoDetails":'),
+        hasRecaptcha: videoPageBody.includes('class="g-recaptcha"')
       });
 
       const captionsMatch = videoPageBody.match(/"captions":(.*?),"videoDetails/);
-      this.log('getting captions', { videoId, captionsMatch });
+      this.log('Captions match result', { 
+        videoId,
+        matchFound: !!captionsMatch,
+        matchLength: captionsMatch?.length,
+        matchContent: captionsMatch ? captionsMatch[1].substring(0, 100) + '...' : null
+      });
+
       if (!captionsMatch || captionsMatch.length < 2) {
         if (videoPageBody.includes('class="g-recaptcha"')) {
           throw new YoutubeTranscriptTooManyRequestError();
