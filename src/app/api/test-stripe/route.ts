@@ -5,12 +5,9 @@ import { PLANS } from '@/src/config/stripe';
 export async function GET() {
   try {
     // Get a product
-    const selectedPlan = PLANS.find((plan) => plan.name === 'Pro');
+    const selectedPlan = PLANS.find(plan => plan.name === 'Pro');
     if (!selectedPlan) {
-      return NextResponse.json(
-        { error: 'Plan not found in configuration' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Plan not found in configuration' }, { status: 500 });
     }
 
     // Get price ID
@@ -38,21 +35,21 @@ export async function GET() {
         metadata: {
           userId: 'test-user',
           priceId: priceId,
-          planName: selectedPlan.name
+          planName: selectedPlan.name,
         },
       });
 
-      return NextResponse.json({ 
-        success: true, 
+      return NextResponse.json({
+        success: true,
         url: session.url,
-        sessionId: session.id 
+        sessionId: session.id,
       });
     } catch (stripeErr) {
       console.error('Stripe API Error:', stripeErr);
       return NextResponse.json(
-        { 
-          error: 'Stripe API Error', 
-          details: stripeErr instanceof Error ? stripeErr.message : 'Unknown error' 
+        {
+          error: 'Stripe API Error',
+          details: stripeErr instanceof Error ? stripeErr.message : 'Unknown error',
         },
         { status: 500 }
       );
@@ -60,8 +57,11 @@ export async function GET() {
   } catch (error) {
     console.error('Test route error:', error);
     return NextResponse.json(
-      { error: 'Failed to test Stripe', details: error instanceof Error ? error.message : 'Unknown error' },
+      {
+        error: 'Failed to test Stripe',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
     );
   }
-} 
+}

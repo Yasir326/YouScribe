@@ -2,7 +2,7 @@ export type Feature = {
   text: string;
   footnote?: string;
   negative?: boolean;
-}
+};
 
 type PricingItem = {
   plan: string;
@@ -11,7 +11,7 @@ type PricingItem = {
   price: number;
   isOneTime: boolean;
   features: Feature[];
-}
+};
 
 export const pricingItems: PricingItem[] = [
   {
@@ -69,4 +69,4 @@ export const pricingItems: PricingItem[] = [
       },
     ],
   },
-]
+];

@@ -21,29 +21,29 @@ export default async function SettingsPage() {
       openaiApiKey: true,
       stripePriceId: true,
       stripeSubscriptionID: true,
-      stripeCurrentPeriodEnd: true
-    }
+      stripeCurrentPeriodEnd: true,
+    },
   });
 
   if (!dbUser) redirect('/auth-callback?origin=settings');
 
   return (
-    <div className='min-h-screen bg-black/[0.96] antialiased bg-grid-white/[0.02]'>
+    <div className="min-h-screen bg-black/[0.96] antialiased bg-grid-white/[0.02]">
       <NavbarLoggedIn />
-      <main className='container mx-auto px-4 py-8'>
-        <h1 className='text-3xl font-bold mb-8 text-white text-center'>API Settings</h1>
-        
+      <main className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-8 text-white text-center">API Settings</h1>
+
         <div className="max-w-2xl mx-auto space-y-6">
           <div className="p-6 bg-gray-900 rounded-lg border-2 border-gray-800">
             <h2 className="text-xl font-semibold text-white mb-6">OpenAI API Configuration</h2>
             <ApiKeyForm hasExistingKey={!!dbUser.openaiApiKey} />
           </div>
         </div>
-        
+
         {/* API Guide Link */}
         <div className="mt-8 text-center">
-          <Link 
-            href="/api-guide" 
+          <Link
+            href="/api-guide"
             className="inline-flex items-center text-purple-400 hover:text-purple-300 transition-colors"
           >
             <Info className="w-4 h-4 mr-2" />
@@ -53,4 +53,4 @@ export default async function SettingsPage() {
       </main>
     </div>
   );
-} 
+}

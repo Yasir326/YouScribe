@@ -1,7 +1,7 @@
-"use client"
+'use client';
 
-import { motion } from "framer-motion"
-import { Youtube } from "lucide-react"
+import { motion } from 'framer-motion';
+import { Youtube } from 'lucide-react';
 
 export function RoboAnimation() {
   return (
@@ -14,7 +14,7 @@ export function RoboAnimation() {
         transition={{
           duration: 4,
           repeat: Number.POSITIVE_INFINITY,
-          ease: "easeInOut",
+          ease: 'easeInOut',
         }}
       >
         <div className="relative">
@@ -27,13 +27,12 @@ export function RoboAnimation() {
             transition={{
               duration: 4,
               repeat: Number.POSITIVE_INFINITY,
-              ease: "easeInOut",
+              ease: 'easeInOut',
             }}
           />
           <Youtube className="w-32 h-32 text-purple-500" />
         </div>
       </motion.div>
     </div>
-  )
+  );
 }
-

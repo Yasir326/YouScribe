@@ -1,25 +1,23 @@
-"use client"
+'use client';
 
-import { LoginLink } from "@kinde-oss/kinde-auth-nextjs/components"
-import { useSearchParams } from "next/navigation"
-import { Button } from "@/src/app/components/ui/button"
-import { AlertCircle } from "lucide-react"
-import { Alert, AlertDescription, AlertTitle } from "@/src/app/components/ui/alert"
-import Link from "next/link"
+import { LoginLink } from '@kinde-oss/kinde-auth-nextjs/components';
+import { useSearchParams } from 'next/navigation';
+import { Button } from '@/src/app/components/ui/button';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/src/app/components/ui/alert';
+import Link from 'next/link';
 
 export default function SignInPage() {
-  const searchParams = useSearchParams()
-  const error = searchParams.get('error')
+  const searchParams = useSearchParams();
+  const error = searchParams.get('error');
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-white">
-            Sign in to your account
-          </h1>
+          <h1 className="text-3xl font-bold tracking-tight text-white">Sign in to your account</h1>
           <p className="mt-2 text-sm text-gray-400">
-            Don&apos;t have an account?{" "}
+            Don&apos;t have an account?{' '}
             <Link href="/" className="text-purple-500 hover:text-purple-400">
               Go back home
             </Link>
@@ -45,5 +43,5 @@ export default function SignInPage() {
         </div>
       </div>
     </div>
-  )
-} 
+  );
+}

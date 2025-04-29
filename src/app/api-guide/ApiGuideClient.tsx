@@ -1,21 +1,26 @@
-"use client"
+'use client';
 
-import { Button } from "@/src/app/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/app/components/ui/card"
-import { motion } from "framer-motion"
-import { SparklesCore } from "@/src/app/components/sparkles"
-import { Key, Terminal, Lock } from "lucide-react"
-import Link from "next/link"
-import { KindeUser } from '@kinde-oss/kinde-auth-nextjs/types'
-import Navbar from '../components/Navbar'
-import NavbarLoggedIn from '../components/NavbarLoggedIn'
+import { Button } from '@/src/app/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/src/app/components/ui/card';
+import { motion } from 'framer-motion';
+import { SparklesCore } from '@/src/app/components/sparkles';
+import { Key, Terminal, Lock } from 'lucide-react';
+import Link from 'next/link';
+import { KindeUser } from '@kinde-oss/kinde-auth-nextjs/types';
+import Navbar from '../components/Navbar';
+import NavbarLoggedIn from '../components/NavbarLoggedIn';
 
 interface ApiGuideClientProps {
-  user: KindeUser<Record<string, unknown>>
+  user: KindeUser<Record<string, unknown>>;
 }
 
 const ApiGuideClient = ({ user }: ApiGuideClientProps) => {
-
   return (
     <div className="min-h-screen bg-black/[0.96] antialiased bg-grid-white/[0.02] relative">
       {/* Ambient background */}
@@ -45,7 +50,8 @@ const ApiGuideClient = ({ user }: ApiGuideClientProps) => {
           >
             <h1 className="text-4xl font-bold text-white mb-6">API Configuration Guide</h1>
             <p className="text-gray-400 text-lg mb-12">
-              Learn how to set up your API tokens and manage your account balance for YouLearnNow&apos;s features.
+              Learn how to set up your API tokens and manage your account balance for
+              YouLearnNow&apos;s features.
             </p>
 
             <div className="space-y-8">
@@ -57,7 +63,9 @@ const ApiGuideClient = ({ user }: ApiGuideClientProps) => {
                       <Key className="h-6 w-6 text-purple-400" />
                     </div>
                     <div>
-                      <CardTitle className="text-white text-xl">1. Generate OpenAI API Key</CardTitle>
+                      <CardTitle className="text-white text-xl">
+                        1. Generate OpenAI API Key
+                      </CardTitle>
                       <CardDescription className="text-gray-400">
                         Create an OpenAI API key to enable AI features
                       </CardDescription>
@@ -66,7 +74,15 @@ const ApiGuideClient = ({ user }: ApiGuideClientProps) => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <ol className="list-decimal list-inside text-gray-300 space-y-2">
-                    <li>Visit <Link href="https://platform.openai.com/api-keys" className="text-purple-400 hover:underline">OpenAI API Keys</Link></li>
+                    <li>
+                      Visit{' '}
+                      <Link
+                        href="https://platform.openai.com/api-keys"
+                        className="text-purple-400 hover:underline"
+                      >
+                        OpenAI API Keys
+                      </Link>
+                    </li>
                     <li>Sign in or create an OpenAI account</li>
                     <li>Click &quot;Create new secret key&quot;</li>
                     <li>Name your key (e.g., &quot;YouLearnNow Integration&quot;)</li>
@@ -115,8 +131,7 @@ const ApiGuideClient = ({ user }: ApiGuideClientProps) => {
         </main>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ApiGuideClient
-
+export default ApiGuideClient;

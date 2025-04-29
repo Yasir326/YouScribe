@@ -9,7 +9,7 @@ type Context = {
 const t = initTRPC.context<Context>().create();
 const middleware = t.middleware;
 
-const isAuthenticated = middleware(async (options) => {
+const isAuthenticated = middleware(async options => {
   try {
     const { getUser } = getKindeServerSession();
     const user = await getUser();

@@ -32,12 +32,9 @@ export async function POST(req: Request) {
     }
 
     const { apiKey } = await req.json();
-    
+
     if (!apiKey) {
-      return NextResponse.json(
-        { error: 'API key is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'API key is required' }, { status: 400 });
     }
 
     // Calculate time range for the current month
@@ -51,7 +48,7 @@ export async function POST(req: Request) {
       `https://api.openai.com/v1/organization/costs?start_time=${startTime}&end_time=${endTime}&interval=1d`,
       {
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
       }
@@ -62,7 +59,7 @@ export async function POST(req: Request) {
       // Try to validate the API key by accessing models
       const modelResponse = await fetch('https://api.openai.com/v1/models', {
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
       });
@@ -76,18 +73,18 @@ export async function POST(req: Request) {
       }
 
       // API key is valid but can't access billing
-      return NextResponse.json({ 
+      return NextResponse.json({
         balance: {
           total_granted: 0,
           total_used: 0,
           total_available: 0,
-          limited_access: true
-        }
+          limited_access: true,
+        },
       });
     }
 
     const costsData = await costsResponse.json();
-    
+
     // Calculate total costs from all buckets
     let totalCost = 0;
     if (costsData.data && costsData.data.length > 0) {
@@ -107,22 +104,22 @@ export async function POST(req: Request) {
     const usageTypes = ['completions', 'embeddings', 'chat'];
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
-    
+
     for (const type of usageTypes) {
       try {
         const usageResponse = await fetch(
           `https://api.openai.com/v1/organization/usage/${type}?start_time=${startTime}&interval=1d`,
           {
             headers: {
-              'Authorization': `Bearer ${apiKey}`,
+              Authorization: `Bearer ${apiKey}`,
               'Content-Type': 'application/json',
             },
           }
         );
-        
+
         if (usageResponse.ok) {
           const usageData = await usageResponse.json();
-          
+
           if (usageData.data && usageData.data.length > 0) {
             usageData.data.forEach((bucket: UsageBucket) => {
               if (bucket.results && bucket.results.length > 0) {
@@ -140,10 +137,9 @@ export async function POST(req: Request) {
       }
     }
 
-
     const estimatedLimit = 5; // Default to $5 for free tier
-    
-    return NextResponse.json({ 
+
+    return NextResponse.json({
       balance: {
         total_granted: estimatedLimit,
         total_used: totalCost,
@@ -151,9 +147,9 @@ export async function POST(req: Request) {
         token_usage: {
           input_tokens: totalInputTokens,
           output_tokens: totalOutputTokens,
-          total_tokens: totalInputTokens + totalOutputTokens
-        }
-      }
+          total_tokens: totalInputTokens + totalOutputTokens,
+        },
+      },
     });
   } catch (error) {
     console.error('Error checking balance:', error);
@@ -162,4 +158,4 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
-} 
+}

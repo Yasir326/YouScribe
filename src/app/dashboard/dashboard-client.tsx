@@ -1,24 +1,24 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { YoutubeForm } from '../components/YoutubeForm'
-import { SummaryDisplay } from '../components/SummaryDisplay'
+import { useState } from 'react';
+import { YoutubeForm } from '../components/YoutubeForm';
+import { SummaryDisplay } from '../components/SummaryDisplay';
 
 type Summary = {
-  id: string
-  content: string
-}
+  id: string;
+  content: string;
+};
 
 interface DashboardClientProps {
-  hasApiKey: boolean
+  hasApiKey: boolean;
 }
 
 export default function DashboardClient({ hasApiKey }: DashboardClientProps) {
-  const [summary, setSummary] = useState<Summary | null>(null)
+  const [summary, setSummary] = useState<Summary | null>(null);
 
   const handleSummaryGenerated = (newSummary: Summary) => {
-    setSummary(newSummary)
-  }
+    setSummary(newSummary);
+  };
 
   return (
     <div className="flex flex-col w-full max-w-4xl mx-auto space-y-6 md:space-y-8">
@@ -29,5 +29,5 @@ export default function DashboardClient({ hasApiKey }: DashboardClientProps) {
         <SummaryDisplay summary={summary} />
       </div>
     </div>
-  )
+  );
 }

@@ -1,22 +1,22 @@
-"use client"
+'use client';
 
-import { Button } from "@/src/app/components/ui/button"
-import { Youtube, Menu, X } from "lucide-react"
-import { motion } from "framer-motion"
-import Link from "next/link"
-import { RegisterLink, LoginLink } from "@kinde-oss/kinde-auth-nextjs/components"
-import type React from "react"
-import { useState, useEffect } from "react"
-import { usePathname } from "next/navigation"
+import { Button } from '@/src/app/components/ui/button';
+import { Youtube, Menu, X } from 'lucide-react';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { RegisterLink, LoginLink } from '@kinde-oss/kinde-auth-nextjs/components';
+import type React from 'react';
+import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function Navbar() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const pathname = usePathname()
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const pathname = usePathname();
 
   // Close menu when pathname changes (user navigates)
   useEffect(() => {
-    setIsMenuOpen(false)
-  }, [pathname])
+    setIsMenuOpen(false);
+  }, [pathname]);
 
   // Custom NavLink that closes the menu when clicked
   const MobileNavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
@@ -29,8 +29,8 @@ export default function Navbar() {
         {children}
         <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-purple-500 transition-all group-hover:w-full" />
       </Link>
-    )
-  }
+    );
+  };
 
   return (
     <motion.nav
@@ -60,9 +60,9 @@ export default function Navbar() {
       </div>
 
       {/* Mobile menu button */}
-      <Button 
-        variant="ghost" 
-        size="icon" 
+      <Button
+        variant="ghost"
+        size="icon"
         className="md:hidden text-white"
         onClick={() => setIsMenuOpen(!isMenuOpen)}
       >
@@ -77,8 +77,8 @@ export default function Navbar() {
             <MobileNavLink href="/pricing">Pricing</MobileNavLink>
             <div className="pt-2 flex flex-col space-y-3">
               <LoginLink>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   className="w-full text-white hover:text-purple-400 justify-start"
                   onClick={() => setIsMenuOpen(false)}
                 >
@@ -86,7 +86,7 @@ export default function Navbar() {
                 </Button>
               </LoginLink>
               <RegisterLink>
-                <Button 
+                <Button
                   className="w-full bg-purple-600 hover:bg-purple-700 text-white"
                   onClick={() => setIsMenuOpen(false)}
                 >
@@ -98,7 +98,7 @@ export default function Navbar() {
         </div>
       )}
     </motion.nav>
-  )
+  );
 }
 
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
@@ -107,5 +107,5 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
       {children}
       <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-purple-500 transition-all group-hover:w-full" />
     </Link>
-  )
+  );
 }

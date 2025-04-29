@@ -6,10 +6,10 @@ export const PLANS = [
       amount: 19.99,
       priceIds: {
         test: process.env.STRIPE_BASIC_PRICE_ID,
-        production: ''
-      }
+        production: '',
+      },
     },
-    quota: 100
+    quota: 100,
   },
   {
     name: 'Pro',
@@ -19,8 +19,8 @@ export const PLANS = [
       amount: 49.99,
       priceIds: {
         test: process.env.STRIPE_PRO_PRICE_ID,
-        production: ''
-      }
-    }
-  }
-]
+        production: '',
+      },
+    },
+  },
+];

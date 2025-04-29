@@ -1,10 +1,10 @@
-"use client"
+'use client';
 
-import { Button } from "@/src/app/components/ui/button"
-import { motion } from "framer-motion"
-import { FileText, Sparkles } from "lucide-react"
-import { RoboAnimation } from "@/src/app/components/robo-animation"
-import { FloatingPaper } from './floating-paper'
+import { Button } from '@/src/app/components/ui/button';
+import { motion } from 'framer-motion';
+import { FileText, Sparkles } from 'lucide-react';
+import { RoboAnimation } from '@/src/app/components/robo-animation';
+import { FloatingPaper } from './floating-paper';
 
 export default function Hero() {
   return (
@@ -16,11 +16,15 @@ export default function Hero() {
 
       <div className="container mx-auto px-6 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
               Transform Your Research with
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
-                {" "}
+                {' '}
                 AI Power
               </span>
             </h1>
@@ -32,8 +36,8 @@ export default function Hero() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-gray-400 text-xl mb-8 max-w-2xl mx-auto"
           >
-            Upload your research papers and let our AI transform them into engaging presentations, podcasts, and visual
-            content.
+            Upload your research papers and let our AI transform them into engaging presentations,
+            podcasts, and visual content.
           </motion.p>
 
           <motion.div
@@ -46,7 +50,11 @@ export default function Hero() {
               <FileText className="mr-2 h-5 w-5" />
               Upload Paper
             </Button>
-            <Button size="lg" variant="outline" className="text-white border-purple-500 hover:bg-purple-500/20">
+            <Button
+              size="lg"
+              variant="outline"
+              className="text-white border-purple-500 hover:bg-purple-500/20"
+            >
               <Sparkles className="mr-2 h-5 w-5" />
               See Examples
             </Button>
@@ -59,6 +67,5 @@ export default function Hero() {
         <RoboAnimation />
       </div>
     </div>
-  )
+  );
 }
-

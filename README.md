@@ -49,25 +49,30 @@ YouLearnNow follows a monolithic architecture with modular components:
 ### Installation
 
 1. Clone the repository:
+
    ```
    git clone https://github.com/yourusername/YouLearnNow.git
    ```
 
 2. Navigate to the project directory:
+
    ```
    cd YouLearnNow
    ```
 
 3. Install dependencies:
+
    ```
    npm install
    ```
 
 4. Set up environment variables:
+
    - Copy `.env.example` to `.env.local`
    - Fill in the required values in `.env.local`
 
 5. Set up the database and run migrations:
+
    ```
    npx prisma migrate dev
    ```
@@ -98,7 +103,6 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 👏 Acknowledgements
-
 
 ## 📞 Contact
 

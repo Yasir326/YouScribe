@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import { useState } from 'react';
 import { Button } from '../components/ui/button';
@@ -86,11 +86,7 @@ export default function ApiKeyForm({ hasExistingKey }: ApiKeyFormProps) {
             <Key className="h-5 w-5 text-green-500" />
             <span className="text-green-500">API key configured</span>
           </div>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={isLoading}
-          >
+          <Button variant="destructive" onClick={handleDelete} disabled={isLoading}>
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
@@ -110,7 +106,7 @@ export default function ApiKeyForm({ hasExistingKey }: ApiKeyFormProps) {
               type="password"
               placeholder="sk-..."
               value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
+              onChange={e => setApiKey(e.target.value)}
               className="bg-gray-800 border-gray-700"
             />
           </div>
@@ -128,14 +124,11 @@ export default function ApiKeyForm({ hasExistingKey }: ApiKeyFormProps) {
           </Button>
         </form>
       )}
-      
+
       <p className="text-sm text-gray-400 mt-4">
         Your API key is stored securely and used only for making requests to OpenAI&apos;s services.
         {!hasKey && (
-          <a
-            href="/api-guide"
-            className="text-purple-400 hover:text-purple-300 ml-1"
-          >
+          <a href="/api-guide" className="text-purple-400 hover:text-purple-300 ml-1">
             Learn how to get your API key →
           </a>
         )}

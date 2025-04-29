@@ -32,7 +32,10 @@ export async function POST(req: NextRequest) {
     const { message, transcript, summary } = body;
 
     if (!message || !transcript) {
-      console.error('Missing required fields:', { hasMessage: !!message, hasTranscript: !!transcript });
+      console.error('Missing required fields:', {
+        hasMessage: !!message,
+        hasTranscript: !!transcript,
+      });
       return NextResponse.json(
         { error: 'Missing required fields (message and transcript are required)' },
         { status: 400 }
@@ -45,14 +48,17 @@ export async function POST(req: NextRequest) {
       select: {
         openaiApiKey: true,
         stripePriceId: true,
-        planName: true
-      }
+        planName: true,
+      },
     });
 
     if (!userSubscription?.openaiApiKey) {
       console.error('OpenAI API key not configured for user');
       return NextResponse.json(
-        { error: 'OpenAI API key not configured. Please add your API key in the dashboard settings.' },
+        {
+          error:
+            'OpenAI API key not configured. Please add your API key in the dashboard settings.',
+        },
         { status: 400 }
       );
     }
@@ -64,7 +70,7 @@ export async function POST(req: NextRequest) {
       if (tier === 'Plus') return 'gpt-4-turbo-preview';
       return 'gpt-3.5-turbo'; // Default for Basic
     })();
-    
+
     console.log('Using model based on tier:', { tier, model });
 
     // Initialize OpenAI

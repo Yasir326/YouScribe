@@ -19,12 +19,14 @@ The quota reset system consists of two main components:
 ### Purchase & Period Tracking
 
 When a user purchases the Basic plan through Stripe:
+
 - Their `usedQuota` is set to 0
 - Their `stripeCurrentPeriodEnd` is set to 30 days from purchase date
 
 ### Quota Reset Process
 
 The system automatically checks for users whose subscription period has ended:
+
 1. Identifies Basic users where `stripeCurrentPeriodEnd` < current date
 2. Resets their `usedQuota` to 0
 3. Sets a new `stripeCurrentPeriodEnd` date 30 days in the future
@@ -85,6 +87,7 @@ curl -X POST "https://YOUR_DOMAIN/api/cron/reset-quotas?api_key=YOUR_SECRET_KEY"
 ```
 
 The response will show which users had their quotas reset:
+
 ```json
 {
   "success": true,
@@ -110,4 +113,4 @@ It's recommended to set up monitoring to ensure the quota reset happens successf
 
 ## Integration with Stripe
 
-Note that when users upgrade their plan through Stripe, their quota is already reset as part of the purchase process, as implemented in the Stripe webhook handler. 
+Note that when users upgrade their plan through Stripe, their quota is already reset as part of the purchase process, as implemented in the Stripe webhook handler.

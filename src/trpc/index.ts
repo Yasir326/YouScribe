@@ -8,7 +8,7 @@ import { stripe } from '../lib/stripe';
 import { PLANS } from '../config/stripe';
 
 // Define the return type for authCallback
-type AuthCallbackResult = 
+type AuthCallbackResult =
   | { success: true; accountMerged?: undefined }
   | { success: true; accountMerged: boolean; error?: string };
 
@@ -18,8 +18,7 @@ export const appRouter = router({
       const { getUser } = getKindeServerSession();
       const user = await getUser();
 
-      if (!user || !user.id || !user.email)
-        throw new TRPCError({ code: 'UNAUTHORIZED' });
+      if (!user || !user.id || !user.email) throw new TRPCError({ code: 'UNAUTHORIZED' });
 
       // First check if user exists by ID
       const dbUserById = await db.user.findUnique({
@@ -53,22 +52,26 @@ export const appRouter = router({
               stripeCustomerId: existingUserByEmail.stripeCustomerId || null,
               stripeSubscriptionID: existingUserByEmail.stripeSubscriptionID || null,
               stripeCurrentPeriodEnd: existingUserByEmail.stripeCurrentPeriodEnd || null,
-              usedQuota: existingUserByEmail.usedQuota
+              usedQuota: existingUserByEmail.usedQuota,
             },
           });
-          
-          return { 
-            success: true, 
+
+          return {
+            success: true,
             accountMerged: true,
-            error: "Account created with your existing plan info, but previous data wasn't migrated to avoid database issues. Contact support if you need access to previous data."
+            error:
+              "Account created with your existing plan info, but previous data wasn't migrated to avoid database issues. Contact support if you need access to previous data.",
           };
         } catch (mergeError) {
-          console.error("Error merging accounts:", mergeError);
+          console.error('Error merging accounts:', mergeError);
           // If merge fails, still return success so user can continue
-          return { 
-            success: true, 
-            accountMerged: false, 
-            error: mergeError instanceof Error ? mergeError.message : 'Unknown error during account merge' 
+          return {
+            success: true,
+            accountMerged: false,
+            error:
+              mergeError instanceof Error
+                ? mergeError.message
+                : 'Unknown error during account merge',
           };
         }
       }
@@ -80,11 +83,11 @@ export const appRouter = router({
           email: user.email,
         },
       });
-      
+
       return { success: true };
     } catch (error) {
-      console.error("Auth callback error:", error);
-      
+      console.error('Auth callback error:', error);
+
       // Re-throw the error to be handled by the TRPC error handler
       throw error;
     }
@@ -99,9 +102,9 @@ export const appRouter = router({
       },
     });
   }),
-  
-  createStripeSession: privateProcedure.mutation(async ({ctx}) => {
-    const {userId} = ctx;
+
+  createStripeSession: privateProcedure.mutation(async ({ ctx }) => {
+    const { userId } = ctx;
     const billingUrl = absoluteUrl('/dashboard/billing');
 
     try {
@@ -113,46 +116,46 @@ export const appRouter = router({
         },
         select: {
           stripePriceId: true,
-          planName: true
-        }
+          planName: true,
+        },
       });
 
-      if (!dbUser) throw new TRPCError({ code: 'UNAUTHORIZED' })
+      if (!dbUser) throw new TRPCError({ code: 'UNAUTHORIZED' });
 
       // If user has already purchased Pro, redirect to billing page
       // They can still purchase Basic if they want to downgrade
       if (dbUser.planName === 'Pro') {
-        return { url: billingUrl }
+        return { url: billingUrl };
       }
 
       // Get the Pro plan from our configuration
-      const selectedPlan = PLANS.find((plan) => plan.name === 'Pro')
-      
+      const selectedPlan = PLANS.find(plan => plan.name === 'Pro');
+
       if (!selectedPlan) {
-        console.error('Selected plan not found in PLANS configuration')
-        throw new TRPCError({ 
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Plan configuration not found'
-        })
-      }
-      
-      const priceId = selectedPlan.price.priceIds.test
-      
-      if (!priceId) {
-        console.error('Missing STRIPE_PRO_PRICE_ID environment variable')
-        throw new TRPCError({ 
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Stripe price ID not found - check environment variables'
-        })
-      }
-      
-      // Ensure price ID is in correct format (price_XXXXXXX)
-      if (!priceId.startsWith('price_')) {
-        console.error('Invalid price ID format:', priceId)
+        console.error('Selected plan not found in PLANS configuration');
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'Invalid Stripe price ID format'
-        })
+          message: 'Plan configuration not found',
+        });
+      }
+
+      const priceId = selectedPlan.price.priceIds.test;
+
+      if (!priceId) {
+        console.error('Missing STRIPE_PRO_PRICE_ID environment variable');
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Stripe price ID not found - check environment variables',
+        });
+      }
+
+      // Ensure price ID is in correct format (price_XXXXXXX)
+      if (!priceId.startsWith('price_')) {
+        console.error('Invalid price ID format:', priceId);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Invalid Stripe price ID format',
+        });
       }
 
       try {
@@ -171,30 +174,30 @@ export const appRouter = router({
           metadata: {
             userId: userId,
             priceId: priceId,
-            planName: selectedPlan.name // Include the plan name in metadata
+            planName: selectedPlan.name, // Include the plan name in metadata
           },
-        })
+        });
 
-        return { url: stripeSession.url }
+        return { url: stripeSession.url };
       } catch (stripeError) {
         console.error('Stripe API error details:', {
           type: stripeError instanceof Error ? stripeError.constructor.name : typeof stripeError,
           message: stripeError instanceof Error ? stripeError.message : 'Unknown error',
           stack: stripeError instanceof Error ? stripeError.stack : undefined,
-        })
-        
+        });
+
         // Re-throw as TRPC error
-        throw new TRPCError({ 
+        throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: stripeError instanceof Error ? stripeError.message : 'Stripe API call failed'
-        })
+          message: stripeError instanceof Error ? stripeError.message : 'Stripe API call failed',
+        });
       }
     } catch (error) {
-      console.error('Error creating Stripe session:', error)
-      throw new TRPCError({ 
+      console.error('Error creating Stripe session:', error);
+      throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
-        message: error instanceof Error ? error.message : 'Failed to create Stripe session'
-      })
+        message: error instanceof Error ? error.message : 'Failed to create Stripe session',
+      });
     }
   }),
 

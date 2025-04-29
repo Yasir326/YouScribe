@@ -1,4 +1,4 @@
-"use client"
+'use client';
 
 import { useState } from 'react';
 import { Button } from '../components/ui/button';
@@ -69,7 +69,7 @@ export default function TokenBalanceChecker({ apiKey: initialApiKey }: TokenBala
 
   // Format large numbers with commas
   const formatNumber = (num: number) => {
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   };
 
   return (
@@ -83,12 +83,12 @@ export default function TokenBalanceChecker({ apiKey: initialApiKey }: TokenBala
             id="apiKey"
             type="password"
             value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
+            onChange={e => setApiKey(e.target.value)}
             placeholder="Enter your OpenAI API key"
             className="flex-1"
           />
-          <Button 
-            onClick={checkBalance} 
+          <Button
+            onClick={checkBalance}
             disabled={isLoading}
             className="bg-purple-600 hover:bg-purple-700 text-white"
           >
@@ -116,8 +116,8 @@ export default function TokenBalanceChecker({ apiKey: initialApiKey }: TokenBala
             <div className="text-center">
               <p className="text-white mb-2">API Key Valid</p>
               <p className="text-xs text-gray-400">
-                This appears to be a valid API key, but billing information is not accessible.
-                This may be a free tier account or a key with limited permissions.
+                This appears to be a valid API key, but billing information is not accessible. This
+                may be a free tier account or a key with limited permissions.
               </p>
             </div>
           ) : (
@@ -136,41 +136,50 @@ export default function TokenBalanceChecker({ apiKey: initialApiKey }: TokenBala
                   <p className="text-white font-semibold">${balance.total_available.toFixed(2)}</p>
                 </div>
               </div>
-              
+
               <div className="mt-3 w-full bg-gray-700 rounded-full h-2.5 mb-4">
-                <div 
-                  className="bg-purple-600 h-2.5 rounded-full" 
-                  style={{ width: `${Math.min(100, (balance.total_used / (balance.total_granted || 1)) * 100)}%` }}
+                <div
+                  className="bg-purple-600 h-2.5 rounded-full"
+                  style={{
+                    width: `${Math.min(100, (balance.total_used / (balance.total_granted || 1)) * 100)}%`,
+                  }}
                 ></div>
               </div>
-              
+
               <p className="text-xs text-gray-400 mb-4 text-center">
-                {((balance.total_used / (balance.total_granted || 1)) * 100).toFixed(1)}% of your monthly limit used
+                {((balance.total_used / (balance.total_granted || 1)) * 100).toFixed(1)}% of your
+                monthly limit used
               </p>
-              
+
               {balance.token_usage && (
                 <div className="border-t border-gray-700 pt-4 mt-2">
                   <p className="text-sm text-gray-300 mb-3 text-center">Token Usage This Month</p>
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div>
                       <p className="text-gray-400 text-xs">Input Tokens</p>
-                      <p className="text-white text-sm">{formatNumber(balance.token_usage.input_tokens)}</p>
+                      <p className="text-white text-sm">
+                        {formatNumber(balance.token_usage.input_tokens)}
+                      </p>
                     </div>
                     <div>
                       <p className="text-gray-400 text-xs">Output Tokens</p>
-                      <p className="text-white text-sm">{formatNumber(balance.token_usage.output_tokens)}</p>
+                      <p className="text-white text-sm">
+                        {formatNumber(balance.token_usage.output_tokens)}
+                      </p>
                     </div>
                     <div>
                       <p className="text-gray-400 text-xs">Total Tokens</p>
-                      <p className="text-white text-sm">{formatNumber(balance.token_usage.total_tokens)}</p>
+                      <p className="text-white text-sm">
+                        {formatNumber(balance.token_usage.total_tokens)}
+                      </p>
                     </div>
                   </div>
                 </div>
               )}
-              
+
               <p className="text-xs text-gray-400 mt-4 text-center italic">
-                Note: This is an estimate based on your current month&apos;s usage. For precise balance information, 
-                please check the OpenAI dashboard.
+                Note: This is an estimate based on your current month&apos;s usage. For precise
+                balance information, please check the OpenAI dashboard.
               </p>
             </>
           )}

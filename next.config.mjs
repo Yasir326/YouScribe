@@ -12,22 +12,19 @@ const nextConfig = {
         destination: '/api/auth/register',
         permanent: true,
       },
-    ]
+    ];
   },
 
-  webpack: (
-    config,
-    {}
-  ) => {
-    config.resolve.alias.canvas = false
-    config.resolve.alias.encoding = false
-    return config
+  webpack: (config, {}) => {
+    config.resolve.alias.canvas = false;
+    config.resolve.alias.encoding = false;
+    return config;
   },
-  
+
   // Suppress useSearchParams suspense warning
   experimental: {
     missingSuspenseWithCSRBailout: false,
-  }
-}
+  },
+};
 
 export default nextConfig;

@@ -1,7 +1,7 @@
 # YouTube Video Summarizer - Project Requirements
 
 1. Project Overview
-Build a web application that allows users to enter a YouTube URL, extract the video's transcript, and use OpenAI to generate a summary and actionable steps based on the video content.
+   Build a web application that allows users to enter a YouTube URL, extract the video's transcript, and use OpenAI to generate a summary and actionable steps based on the video content.
 2. Technology Stack
 
 Next.js
@@ -12,14 +12,12 @@ Clerk
 OpenAI API
 
 3. Feature Requirements
-3.1 User Interface
+   3.1 User Interface
 
 Create a form with:
 
 An input field for the YouTube URL
 A button to submit and initiate the summarization process
-
-
 
 3.2 Video Processing
 
@@ -54,27 +52,26 @@ Loading state while generating the summary
 Ensure responsive design for various screen sizes
 Implement proper error handling throughout the application
 
-
 YouLearnNow
 └── YouLearnNow
-    └── app
-        ├── fonts
-        │   ├── GeistMonoVF.woff
-        │   ├── GeistVF.woff
-        │   └── favicon.ico
-        ├── globals.css
-        ├── layout.tsx
-        ├── page.tsx
-        ├── lib
-        └── node_modules
-    ├── .eslintrc.json
-    ├── .gitignore
-    ├── components.json
-    ├── next-env.d.ts
-    ├── next.config.mjs
-    ├── package-lock.json
-    ├── package.json
-    ├── postcss.config.mjs
-    ├── README.md
-    ├── tailwind.config.ts
-    └── tsconfig.json
+└── app
+├── fonts
+│ ├── GeistMonoVF.woff
+│ ├── GeistVF.woff
+│ └── favicon.ico
+├── globals.css
+├── layout.tsx
+├── page.tsx
+├── lib
+└── node_modules
+├── .eslintrc.json
+├── .gitignore
+├── components.json
+├── next-env.d.ts
+├── next.config.mjs
+├── package-lock.json
+├── package.json
+├── postcss.config.mjs
+├── README.md
+├── tailwind.config.ts
+└── tsconfig.json

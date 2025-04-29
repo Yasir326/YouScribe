@@ -14,10 +14,7 @@ export async function POST(req: Request) {
     const { apiKey } = await req.json();
 
     if (!apiKey || !apiKey.startsWith('sk-')) {
-      return NextResponse.json(
-        { error: 'Invalid API key format' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid API key format' }, { status: 400 });
     }
 
     await db.user.update({
@@ -28,10 +25,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error saving API key:', error);
-    return NextResponse.json(
-      { error: 'Failed to save API key' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to save API key' }, { status: 500 });
   }
 }
 
@@ -52,9 +46,6 @@ export async function DELETE() {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting API key:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete API key' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to delete API key' }, { status: 500 });
   }
-} 
+}

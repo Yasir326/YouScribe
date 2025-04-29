@@ -1,45 +1,45 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 
 export function LoadingAnimation() {
-  const [progress, setProgress] = useState(0)
-  const [messageIndex, setMessageIndex] = useState(0)
+  const [progress, setProgress] = useState(0);
+  const [messageIndex, setMessageIndex] = useState(0);
 
   const loadingMessages = [
-    "Analyzing your content...",
-    "Did you know? The average person spends 6 months of their lifetime waiting for red lights to turn green!",
-    "Crafting your perfect summary...",
-    "Fun fact: Honey never spoils. Archaeologists found 3000-year-old honey in Egyptian tombs!",
-    "Almost there! Processing final touches...",
-    "Did you know? Cows have best friends and get stressed when separated!",
-    "Making sure we catch all the important details...",
-    "Random fact: A day on Venus is longer than its year!",
+    'Analyzing your content...',
+    'Did you know? The average person spends 6 months of their lifetime waiting for red lights to turn green!',
+    'Crafting your perfect summary...',
+    'Fun fact: Honey never spoils. Archaeologists found 3000-year-old honey in Egyptian tombs!',
+    'Almost there! Processing final touches...',
+    'Did you know? Cows have best friends and get stressed when separated!',
+    'Making sure we catch all the important details...',
+    'Random fact: A day on Venus is longer than its year!',
     "Thanks for your patience, we're working hard on this...",
     "Did you know? The first oranges weren't orange - they were green!",
-  ]
+  ];
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setProgress((prevProgress) => {
+      setProgress(prevProgress => {
         if (prevProgress >= 100) {
-          clearInterval(timer)
-          return 100
+          clearInterval(timer);
+          return 100;
         }
-        return prevProgress + 1
-      })
-    }, 150)
+        return prevProgress + 1;
+      });
+    }, 150);
 
     const messageTimer = setInterval(() => {
-      setMessageIndex((prev) => (prev + 1) % loadingMessages.length)
-    }, 3000) // Change message every 3 seconds
+      setMessageIndex(prev => (prev + 1) % loadingMessages.length);
+    }, 3000); // Change message every 3 seconds
 
     return () => {
-      clearInterval(timer)
-      clearInterval(messageTimer)
-    }
-  }, [loadingMessages.length])
+      clearInterval(timer);
+      clearInterval(messageTimer);
+    };
+  }, [loadingMessages.length]);
 
   return (
     <motion.div
@@ -69,7 +69,5 @@ export function LoadingAnimation() {
         </motion.p>
       </div>
     </motion.div>
-  )
+  );
 }
-
-

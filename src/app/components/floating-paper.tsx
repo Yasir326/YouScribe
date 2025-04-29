@@ -1,36 +1,36 @@
-"use client"
+'use client';
 
-import { useEffect, useState } from "react"
-import { motion } from "framer-motion"
-import { Youtube, FileText, Video, Headphones, Book, Sparkles } from "lucide-react"
+import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { Youtube, FileText, Video, Headphones, Book, Sparkles } from 'lucide-react';
 
-const icons = [Youtube, FileText, Video, Headphones, Book, Sparkles]
+const icons = [Youtube, FileText, Video, Headphones, Book, Sparkles];
 
 export function FloatingPaper({ count = 5 }) {
-  const [dimensions, setDimensions] = useState({ width: 1200, height: 800 })
+  const [dimensions, setDimensions] = useState({ width: 1200, height: 800 });
 
   useEffect(() => {
     // Update dimensions only on client side
     setDimensions({
       width: window.innerWidth,
       height: window.innerHeight,
-    })
+    });
 
     const handleResize = () => {
       setDimensions({
         width: window.innerWidth,
         height: window.innerHeight,
-      })
-    }
+      });
+    };
 
-    window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
-  }, [])
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <div className="relative w-full h-full">
       {Array.from({ length: count }).map((_, i) => {
-        const RandomIcon = icons[Math.floor(Math.random() * icons.length)]
+        const RandomIcon = icons[Math.floor(Math.random() * icons.length)];
         return (
           <motion.div
             key={i}
@@ -40,7 +40,11 @@ export function FloatingPaper({ count = 5 }) {
               y: Math.random() * dimensions.height,
             }}
             animate={{
-              x: [Math.random() * dimensions.width, Math.random() * dimensions.width, Math.random() * dimensions.width],
+              x: [
+                Math.random() * dimensions.width,
+                Math.random() * dimensions.width,
+                Math.random() * dimensions.width,
+              ],
               y: [
                 Math.random() * dimensions.height,
                 Math.random() * dimensions.height,
@@ -51,16 +55,15 @@ export function FloatingPaper({ count = 5 }) {
             transition={{
               duration: 20 + Math.random() * 10,
               repeat: Number.POSITIVE_INFINITY,
-              ease: "linear",
+              ease: 'linear',
             }}
           >
             <div className="relative w-16 h-20 bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform">
               <RandomIcon className="w-8 h-8 text-purple-400/50" />
             </div>
           </motion.div>
-        )
+        );
       })}
     </div>
-  )
+  );
 }
-
