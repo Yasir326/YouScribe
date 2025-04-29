@@ -122,8 +122,9 @@ interface LogData {
   matchFound?: boolean;
   matchLength?: number;
   matchContent?: string | null;
-  responsePreview?: string;
-  pattern?: string;
+  jsonLength?: number;
+  jsonPreview?: string;
+  trackCount?: number;
 }
 
 /**
@@ -266,33 +267,15 @@ export class YoutubeTranscript {
         hasCaptions: videoPageBody.includes('"captions":'),
         hasVideoDetails: videoPageBody.includes('"videoDetails":'),
         hasRecaptcha: videoPageBody.includes('class="g-recaptcha"'),
-        responsePreview: videoPageBody.substring(0, 500) + '...'
+        jsonPreview: videoPageBody.substring(0, 500) + '...'
       });
 
-      // Try multiple patterns to find captions
-      const captionsPatterns = [
-        /"captions":(.*?),"videoDetails"/,
-        /"captions":(.*?)},"videoDetails"/
-      ];
-
-      let captionsMatch = null;
-      for (const pattern of captionsPatterns) {
-        captionsMatch = videoPageBody.match(pattern);
-        if (captionsMatch) {
-          this.log('Found captions with pattern', { 
-            videoId,
-            pattern: pattern.toString(),
-            matchLength: captionsMatch.length
-          });
-          break;
-        }
-      }
-
+      const captionsMatch = videoPageBody.match(/"captions":(.*?),"videoDetails"/);
       this.log('Captions match result', { 
         videoId,
         matchFound: !!captionsMatch,
         matchLength: captionsMatch?.length,
-        matchContent: captionsMatch ? captionsMatch[1].substring(0, 100) + '...' : null
+        matchContent: captionsMatch ? captionsMatch[1].substring(0, 200) + '...' : null
       });
 
       if (!captionsMatch || captionsMatch.length < 2) {
@@ -307,15 +290,25 @@ export class YoutubeTranscript {
 
       let captions;
       try {
-        captions = JSON.parse(captionsMatch[1].replace('\n', ''))['playerCaptionsTracklistRenderer'];
+        const captionsJson = captionsMatch[1].replace('\n', '');
+        this.log('Parsing captions JSON', {
+          videoId,
+          jsonLength: captionsJson.length,
+          jsonPreview: captionsJson.substring(0, 200) + '...'
+        });
+        
+        captions = JSON.parse(captionsJson)['playerCaptionsTracklistRenderer'];
+        
         this.log('Captions parsed', { 
           videoId,
-          availableLanguages: captions?.captionTracks?.map((track: { languageCode: string }) => track.languageCode)
+          availableLanguages: captions?.captionTracks?.map((track: { languageCode: string }) => track.languageCode),
+          trackCount: captions?.captionTracks?.length
         });
       } catch (e) {
         this.log('Failed to parse captions', { 
           videoId, 
-          parseError: e 
+          parseError: e instanceof Error ? e.message : 'Unknown error',
+          jsonPreview: captionsMatch[1].substring(0, 200) + '...'
         });
         throw new YoutubeTranscriptDisabledError(videoId);
       }
