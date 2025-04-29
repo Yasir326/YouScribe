@@ -100,12 +100,37 @@ export interface TranscriptResponse {
   lang?: string;
 }
 
+interface LogData {
+  videoId: string;
+  config?: TranscriptConfig;
+  itemCount?: number;
+  error?: string;
+  status?: number;
+  useProxy?: boolean;
+  proxyConfigured?: boolean;
+  timeout?: number;
+  usingProxy?: boolean;
+  bodyLength?: number;
+  availableLanguages?: string[];
+  transcriptURL?: string;
+  firstItem?: TranscriptResponse;
+  parseError?: unknown;
+}
+
 /**
  * Class to retrieve transcript if exist
  */
 export class YoutubeTranscript {  
   // Set a reasonable global timeout - 5 seconds to stay well under serverless function limits
   private static TIMEOUT = 5000;
+
+  private static log(message: string, data?: LogData) {
+    if (isServer) {
+      const timestamp = new Date().toISOString();
+      const logData = data ? `\nData: ${JSON.stringify(data, null, 2)}` : '';
+      console.log(`[${timestamp}] [YouTube Transcript] ${message}${logData}`);
+    }
+  }
 
   /**
    * Fetch transcript from YTB Video with timeout and retry logic
@@ -119,23 +144,24 @@ export class YoutubeTranscript {
     const identifier = this.retrieveVideoId(videoId);
     const cacheKey = `${identifier}_${config?.lang || 'default'}`;
     
+    this.log('Starting transcript fetch', { videoId: identifier, config });
+    
     if (isServer && !config?.skipCache && transcriptCache[cacheKey]) {
       const cached = transcriptCache[cacheKey];
       if (Date.now() - cached.timestamp < CACHE_TTL) {
-        console.log(`[YouTube Transcript] Using cached transcript for ${identifier}`);
+        this.log('Using cached transcript', { videoId: identifier });
         return cached.data;
       } else {
-        // Cache expired
+        this.log('Cache expired', { videoId: identifier });
         delete transcriptCache[cacheKey];
       }
     }
     
     try {
-      // Try to fetch the transcript with a timeout
       const result = await this.fetchTranscriptWithTimeout(identifier, config);
       
-      // Store in cache if on server
       if (isServer) {
+        this.log('Storing in cache', { videoId: identifier, itemCount: result.length });
         transcriptCache[cacheKey] = {
           timestamp: Date.now(),
           data: result
@@ -144,18 +170,20 @@ export class YoutubeTranscript {
       
       return result;
     } catch (error) {
-      console.error(error instanceof Error ? error.message : 'Unknown error');
+      this.log('Error fetching transcript', { 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        videoId: identifier,
+        status: axios.isAxiosError(error) ? error.response?.status : undefined
+      });
               
       if (axios.isAxiosError(error) && 
           error.response?.status === 407 && 
           isDevelopment && 
           !config?.forceNoProxy) {
-        console.log('[YouTube Transcript] Proxy auth failed in dev mode, retrying without proxy');
-        // Retry without proxy
+        this.log('Proxy auth failed in dev mode, retrying without proxy', { videoId: identifier });
         return this.fetchTranscriptWithTimeout(identifier, { ...config, forceNoProxy: true });
       }
       
-      // Don't retry if it's a client error (4xx) except for 407 proxy errors
       if (axios.isAxiosError(error) && 
           error.response && 
           error.response.status >= 400 && 
@@ -181,19 +209,24 @@ export class YoutubeTranscript {
                      proxyUrl !== null && 
                      !isDevelopment;
     
-    // Create a promise that rejects after timeout
+    this.log('Starting transcript fetch with timeout', { 
+      videoId, 
+      useProxy,
+      proxyConfigured: !!proxyUrl,
+      timeout: this.TIMEOUT 
+    });
+
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => reject(new Error('YouTube transcript fetch timed out')), this.TIMEOUT);
     });
 
     try {
-      // Configure proxy agent only if needed
       const proxyAgent = useProxy && SMARTPROXY_USERNAME && SMARTPROXY_PASSWORD
         ? new HttpsProxyAgent(`http://${SMARTPROXY_USERNAME}:${SMARTPROXY_PASSWORD}@${SMARTPROXY_HOST}:${SMARTPROXY_PORT}`)
         : undefined;
 
-        console.log('=====> block 1')
-      // Race the fetch against the timeout
+      this.log('Fetching video page', { videoId, usingProxy: !!proxyAgent });
+
       const videoPageResponse = await Promise.race([
         axios.get(`https://www.youtube.com/watch?v=${videoId}`, {
           httpAgent: proxyAgent,
@@ -206,10 +239,13 @@ export class YoutubeTranscript {
       ]) as { data: string; status: number };
         
       const videoPageBody = videoPageResponse.data;
-
-      console.log('=====> block 2')
       
-      // Extract captions data more efficiently
+      this.log('Video page fetched', { 
+        videoId, 
+        status: videoPageResponse.status,
+        bodyLength: videoPageBody.length 
+      });
+
       const captionsMatch = videoPageBody.match(/"captions":(.*?),"videoDetails/);
       if (!captionsMatch || captionsMatch.length < 2) {
         if (videoPageBody.includes('class="g-recaptcha"')) {
@@ -221,18 +257,20 @@ export class YoutubeTranscript {
         throw new YoutubeTranscriptDisabledError(videoId);
       }
 
-      console.log('=====> block 3')
-
-      // Parse only the captions section, not the entire response
       let captions;
       try {
         captions = JSON.parse(captionsMatch[1].replace('\n', ''))['playerCaptionsTracklistRenderer'];
+        this.log('Captions parsed', { 
+          videoId,
+          availableLanguages: captions?.captionTracks?.map((track: { languageCode: string }) => track.languageCode)
+        });
       } catch (e) {
-        console.error('[YouTube Transcript] JSON parse error:', e);
+        this.log('Failed to parse captions', { 
+          videoId, 
+          parseError: e 
+        });
         throw new YoutubeTranscriptDisabledError(videoId);
       }
-
-      console.log('=====> block 4')
 
       if (!captions || !('captionTracks' in captions)) {
         throw new YoutubeTranscriptNotAvailableError(videoId);
@@ -259,7 +297,8 @@ export class YoutubeTranscript {
           : captions.captionTracks[0]
       ).baseUrl;
 
-      // Race the transcript fetch against the timeout
+      this.log('Fetching transcript', { videoId, transcriptURL });
+
       const transcriptResponse = await Promise.race([
         axios.get(transcriptURL, {
           httpAgent: proxyAgent,
@@ -268,6 +307,7 @@ export class YoutubeTranscript {
             'User-Agent': USER_AGENT,
           },
         }),
+        timeoutPromise
       ]) as { data: string; status: number };
       
       if (transcriptResponse.status !== 200) {
@@ -277,8 +317,6 @@ export class YoutubeTranscript {
       const transcriptBody = transcriptResponse.data;
       const transcriptItems: TranscriptResponse[] = [];
       
-      // Safely process transcript data 
-      // Use a faster RegExp match approach
       const regex = /<text start="([^"]*)" dur="([^"]*)">([^<]*)<\/text>/g;
       let match;
       while ((match = regex.exec(transcriptBody)) !== null) {
@@ -292,14 +330,22 @@ export class YoutubeTranscript {
         }
       }
       
-      if (isServer) {
-        console.log(`[YouTube Transcript] Successfully fetched ${transcriptItems.length} transcript items`);
-      }
+      this.log('Transcript fetched successfully', { 
+        videoId, 
+        itemCount: transcriptItems.length,
+        firstItem: transcriptItems[0]
+      });
+      
       return transcriptItems;
     } catch (error) {
-      // If it's a proxy authentication error, try again without proxy
+      this.log('Error in fetchTranscriptWithTimeout', { 
+        videoId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        status: axios.isAxiosError(error) ? error.response?.status : undefined
+      });
+
       if (axios.isAxiosError(error) && error.response?.status === 407) {
-        console.log('[YouTube Transcript] Proxy auth failed, retrying without proxy');
+        this.log('Proxy auth failed, retrying without proxy', { videoId });
         return this.fetchTranscriptWithTimeout(videoId, { ...config, forceNoProxy: true });
       }
       throw error;
