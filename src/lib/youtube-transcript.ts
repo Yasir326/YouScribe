@@ -115,6 +115,7 @@ interface LogData {
   transcriptURL?: string;
   firstItem?: TranscriptResponse;
   parseError?: unknown;
+  captionsMatch?: RegExpMatchArray | null;
 }
 
 /**
@@ -247,6 +248,7 @@ export class YoutubeTranscript {
       });
 
       const captionsMatch = videoPageBody.match(/"captions":(.*?),"videoDetails/);
+      this.log('getting captions', { videoId, captionsMatch });
       if (!captionsMatch || captionsMatch.length < 2) {
         if (videoPageBody.includes('class="g-recaptcha"')) {
           throw new YoutubeTranscriptTooManyRequestError();
