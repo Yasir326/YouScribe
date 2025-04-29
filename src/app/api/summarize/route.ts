@@ -103,7 +103,6 @@ export async function POST(req: NextRequest) {
     // Fetch transcript with improved performance
     let transcript: string;
     try {
-      // In development mode, explicitly set forceNoProxy to true for direct connections
       const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId, { 
         useProxy: !isDevelopment,
         skipCache: isDevelopment,

@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig } from 'axios';
+import axios from 'axios';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 
 const RE_YOUTUBE =
@@ -103,13 +103,10 @@ export interface TranscriptResponse {
 /**
  * Class to retrieve transcript if exist
  */
-export class YoutubeTranscript {
+export class YoutubeTranscript {  
   // Set a reasonable global timeout - 5 seconds to stay well under serverless function limits
   private static TIMEOUT = 5000;
-  
-  // Allow retries with exponential backoff
-  private static MAX_RETRIES = 1;
-  
+
   /**
    * Fetch transcript from YTB Video with timeout and retry logic
    * @param videoId Video url or video identifier
@@ -133,80 +130,42 @@ export class YoutubeTranscript {
       }
     }
     
-    // Add retry logic
-    let lastError: Error = new Error('Unknown error occurred');
-    
-    for (let attempt = 0; attempt <= this.MAX_RETRIES; attempt++) {
-      try {
-        // Apply exponential backoff on retries
-        if (attempt > 0) {
-          const delay = Math.min(Math.pow(2, attempt) * 500, 2000);
-          console.log(`[YouTube Transcript] Retry attempt ${attempt}, waiting ${delay}ms`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
-        
-        // Try to fetch the transcript with a timeout
-        const result = await this.fetchTranscriptWithTimeout(identifier, config);
-        
-        // Store in cache if on server
-        if (isServer) {
-          transcriptCache[cacheKey] = {
-            timestamp: Date.now(),
-            data: result
-          };
-        }
-        
-        return result;
-      } catch (error) {
-        console.error(`[YouTube Transcript] Attempt ${attempt + 1}/${this.MAX_RETRIES + 1} failed:`, 
-          error instanceof Error ? error.message : 'Unknown error');
-        
-        if (error instanceof Error) {
-          lastError = error;
-        }
-        
-        // If it's a proxy authentication error in development mode, 
-        // try again without proxy
-        if (axios.isAxiosError(error) && 
-            error.response?.status === 407 && 
-            isDevelopment && 
-            !config?.forceNoProxy && 
-            attempt === 0) {
-          console.log('[YouTube Transcript] Proxy auth failed in dev mode, retrying without proxy');
-          try {
-            // Force no proxy for the second attempt
-            const newConfig = { ...config, forceNoProxy: true };
-            const result = await this.fetchTranscriptWithTimeout(identifier, newConfig);
-            
-            // Store in cache if on server
-            if (isServer) {
-              transcriptCache[cacheKey] = {
-                timestamp: Date.now(),
-                data: result
-              };
-            }
-            
-            return result;
-          } catch (retryError) {
-            console.error('[YouTube Transcript] No-proxy retry also failed:', 
-              retryError instanceof Error ? retryError.message : 'Unknown error');
-            // Continue with normal retry process if this also fails
-          }
-        }
-        
-        // Don't retry if it's a client error (4xx) except for 407 proxy errors
-        if (axios.isAxiosError(error) && 
-            error.response && 
-            error.response.status >= 400 && 
-            error.response.status < 500 && 
-            error.response.status !== 407) {
-          throw error;
-        }
+    try {
+      // Try to fetch the transcript with a timeout
+      const result = await this.fetchTranscriptWithTimeout(identifier, config);
+      
+      // Store in cache if on server
+      if (isServer) {
+        transcriptCache[cacheKey] = {
+          timestamp: Date.now(),
+          data: result
+        };
       }
+      
+      return result;
+    } catch (error) {
+      console.error(error instanceof Error ? error.message : 'Unknown error');
+              
+      if (axios.isAxiosError(error) && 
+          error.response?.status === 407 && 
+          isDevelopment && 
+          !config?.forceNoProxy) {
+        console.log('[YouTube Transcript] Proxy auth failed in dev mode, retrying without proxy');
+        // Retry without proxy
+        return this.fetchTranscriptWithTimeout(identifier, { ...config, forceNoProxy: true });
+      }
+      
+      // Don't retry if it's a client error (4xx) except for 407 proxy errors
+      if (axios.isAxiosError(error) && 
+          error.response && 
+          error.response.status >= 400 && 
+          error.response.status < 500 && 
+          error.response.status !== 407) {
+        throw error;
+      }
+      
+      throw error;
     }
-    
-    // All retries failed
-    throw lastError;
   }
   
   /**
@@ -222,36 +181,26 @@ export class YoutubeTranscript {
                      proxyUrl !== null && 
                      !isDevelopment;
     
-    const proxyAgent = new HttpsProxyAgent(`http://${SMARTPROXY_USERNAME}:${SMARTPROXY_PASSWORD}@${SMARTPROXY_HOST}:${SMARTPROXY_PORT}`);
-    
-    // Configure axios request options with shorter timeout
-    const requestConfig: AxiosRequestConfig = {
-      headers: {
-        ...(config?.lang && { 'Accept-Language': config.lang }),
-        'User-Agent': USER_AGENT,
-      },
-      timeout: this.TIMEOUT / 2,
-    };
-
-
-    
-
     // Create a promise that rejects after timeout
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => reject(new Error('YouTube transcript fetch timed out')), this.TIMEOUT);
     });
 
     try {
+      // Configure proxy agent only if needed
+      const proxyAgent = useProxy && SMARTPROXY_USERNAME && SMARTPROXY_PASSWORD
+        ? new HttpsProxyAgent(`http://${SMARTPROXY_USERNAME}:${SMARTPROXY_PASSWORD}@${SMARTPROXY_HOST}:${SMARTPROXY_PORT}`)
+        : undefined;
+
       // Race the fetch against the timeout
       const videoPageResponse = await Promise.race([
         axios.get(`https://www.youtube.com/watch?v=${videoId}`, {
-          httpAgent: useProxy ? proxyAgent : undefined,
+          httpAgent: proxyAgent,
           headers: {
             ...(config?.lang && { 'Accept-Language': config.lang }),
             'User-Agent': USER_AGENT,
           },
-          timeout: this.TIMEOUT / 2,
-        } ),
+        }),
         timeoutPromise
       ]) as { data: string; status: number };
         
@@ -305,8 +254,13 @@ export class YoutubeTranscript {
 
       // Race the transcript fetch against the timeout
       const transcriptResponse = await Promise.race([
-        axios.get(transcriptURL, requestConfig),
-        timeoutPromise
+        axios.get(transcriptURL, {
+          httpAgent: proxyAgent,
+          headers: {
+            ...(config?.lang && { 'Accept-Language': config.lang }),
+            'User-Agent': USER_AGENT,
+          },
+        }),
       ]) as { data: string; status: number };
       
       if (transcriptResponse.status !== 200) {
