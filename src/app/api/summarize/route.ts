@@ -105,9 +105,9 @@ export async function POST(req: NextRequest) {
     try {
       // In development mode, explicitly set forceNoProxy to true for direct connections
       const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId, { 
-        useProxy: !isDevelopment, // Don't use proxy in development
-        skipCache: isDevelopment, // Skip cache in development for fresh results
-        forceNoProxy: isDevelopment // Force no proxy in development
+        useProxy: !isDevelopment,
+        skipCache: isDevelopment,
+        forceNoProxy: isDevelopment
       });
       
       if (!transcriptArray || transcriptArray.length === 0) {

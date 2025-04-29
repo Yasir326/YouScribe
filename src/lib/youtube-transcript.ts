@@ -1,16 +1,13 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { HttpsProxyAgent } from 'https-proxy-agent';
-import { HttpProxyAgent } from 'http-proxy-agent';
 
 const RE_YOUTUBE =
   /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
 const USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36,gzip(gfe)';
 
-// This will track whether we're in server or browser environment
 const isServer = typeof window === 'undefined';
 
-// Get environment variables safely (SERVER-SIDE ONLY)
 const getEnv = (name: string): string => {
   if (!isServer) return '';
   
@@ -33,19 +30,16 @@ const transcriptCache: Record<string, {
 // Cache expiration time: 1 hour
 const CACHE_TTL = 3600000;
 
-// Get proxy credentials (SERVER-SIDE ONLY)
 const SMARTPROXY_USERNAME = getEnv('SMARTPROXY_USERNAME');
 const SMARTPROXY_PASSWORD = getEnv('SMARTPROXY_PASSWORD');
 const SMARTPROXY_HOST = 'gate.decodo.com';
 const SMARTPROXY_PORT = '10010';
 
-// Create proxy URL (SERVER-SIDE ONLY)
 const proxyUrl = 
   isServer && SMARTPROXY_USERNAME && SMARTPROXY_PASSWORD
     ? `http://${SMARTPROXY_USERNAME}:${SMARTPROXY_PASSWORD}@${SMARTPROXY_HOST}:${SMARTPROXY_PORT}`
     : null;
 
-// Log proxy configuration status (but only on server side)
 if (isServer) {
   console.log(`[YouTube Transcript] Proxy ${proxyUrl ? 'configured' : 'not configured'}, Development mode: ${isDevelopment}`);
 }
@@ -128,7 +122,6 @@ export class YoutubeTranscript {
     const identifier = this.retrieveVideoId(videoId);
     const cacheKey = `${identifier}_${config?.lang || 'default'}`;
     
-    // Check cache first (if not explicitly skipped)
     if (isServer && !config?.skipCache && transcriptCache[cacheKey]) {
       const cached = transcriptCache[cacheKey];
       if (Date.now() - cached.timestamp < CACHE_TTL) {
@@ -223,14 +216,13 @@ export class YoutubeTranscript {
     videoId: string,
     config?: TranscriptConfig
   ): Promise<TranscriptResponse[]> {
-    // IMPORTANT: Browser check - NEVER use proxy in browser context
-    // This prevents 407 authentication errors in the browser
-    // Also respect forceNoProxy flag for development mode or fallbacks
     const useProxy = isServer && 
                      !config?.forceNoProxy && 
                      config?.useProxy !== false && 
                      proxyUrl !== null && 
-                     !isDevelopment; // Don't use proxy in development by default
+                     !isDevelopment;
+    
+    const proxyAgent = new HttpsProxyAgent(`http://${SMARTPROXY_USERNAME}:${SMARTPROXY_PASSWORD}@${SMARTPROXY_HOST}:${SMARTPROXY_PORT}`);
     
     // Configure axios request options with shorter timeout
     const requestConfig: AxiosRequestConfig = {
@@ -238,40 +230,11 @@ export class YoutubeTranscript {
         ...(config?.lang && { 'Accept-Language': config.lang }),
         'User-Agent': USER_AGENT,
       },
-      // Shorter timeout to prevent function timeouts
       timeout: this.TIMEOUT / 2,
-      // Add proxy configuration if needed
-      ...(useProxy && proxyUrl ? {
-        proxy: {
-          host: SMARTPROXY_HOST,
-          port: parseInt(SMARTPROXY_PORT),
-          auth: {
-            username: SMARTPROXY_USERNAME || '',
-            password: SMARTPROXY_PASSWORD || ''
-          }
-        }
-      } : {})
     };
+
+
     
-    // Only configure proxy agents if explicitly needed
-    if (useProxy && proxyUrl) {
-      try {
-        requestConfig.httpsAgent = new HttpsProxyAgent(proxyUrl);
-        requestConfig.httpAgent = new HttpProxyAgent(proxyUrl);
-        
-        if (isServer) {
-          console.log(`[YouTube Transcript] Fetching video ${videoId} with proxy`);
-        }
-      } catch (error) {
-        console.error('[YouTube Transcript] Error setting up proxy:', error);
-        // If proxy setup fails, continue without proxy
-        delete requestConfig.httpsAgent;
-        delete requestConfig.httpAgent;
-        delete requestConfig.proxy;
-      }
-    } else if (isServer) {
-      console.log(`[YouTube Transcript] Fetching video ${videoId} without proxy`);
-    }
 
     // Create a promise that rejects after timeout
     const timeoutPromise = new Promise<never>((_, reject) => {
@@ -281,7 +244,14 @@ export class YoutubeTranscript {
     try {
       // Race the fetch against the timeout
       const videoPageResponse = await Promise.race([
-        axios.get(`https://www.youtube.com/watch?v=${videoId}`, requestConfig),
+        axios.get(`https://www.youtube.com/watch?v=${videoId}`, {
+          httpAgent: useProxy ? proxyAgent : undefined,
+          headers: {
+            ...(config?.lang && { 'Accept-Language': config.lang }),
+            'User-Agent': USER_AGENT,
+          },
+          timeout: this.TIMEOUT / 2,
+        } ),
         timeoutPromise
       ]) as { data: string; status: number };
         
