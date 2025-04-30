@@ -73,7 +73,7 @@ export class YoutubeTranscript {
     videoId: string,
     config?: TranscriptConfig
   ): Promise<TranscriptResponse[]> {
-    this.log('Starting transcript fetch', { videoId });
+    this.log('Starting transcript fetch', {isDevelopment, videoId });
     const identifier = this.retrieveVideoId(videoId);
     const videoPageResponse = await fetch(
       `https://www.youtube.com/watch?v=${identifier}`,
@@ -86,6 +86,7 @@ export class YoutubeTranscript {
     );
     const videoPageBody = await videoPageResponse.text();
     this.log('Video page fetched', {
+          isDevelopment,
           videoId,
           status: videoPageResponse.status,
           bodyLength: JSON.stringify(videoPageBody).length,
@@ -99,37 +100,37 @@ export class YoutubeTranscript {
 
     if (splittedHTML.length <= 1) {
       if (videoPageBody.includes('class="g-recaptcha"')) {
-        this.log('Captcha found', { videoId });
+        this.log('Captcha found', { isDevelopment, videoId });
         throw new YoutubeTranscriptTooManyRequestError();
       }
       if (!videoPageBody.includes('"playabilityStatus":')) {
-        this.log('Video unavailable', { videoId });
+        this.log('Video unavailable', { isDevelopment, videoId });
         throw new YoutubeTranscriptVideoUnavailableError(videoId);
       }
-      this.log('Transcript disabled', { videoId });
+      this.log('Transcript disabled', { isDevelopment, videoId });
       throw new YoutubeTranscriptDisabledError(videoId);
     }
 
 
     const captions = (() => {
       try {
-        this.log('Parsing captions', { videoId });
+        this.log('Parsing captions', { isDevelopment, videoId });
         return JSON.parse(
           splittedHTML[1].split(',"videoDetails')[0].replace('\n', '')
         );
       } catch (e) {
-        this.log('Error parsing captions', { videoId, error: e instanceof Error ? e.message : 'Unknown error' });
+        this.log('Error parsing captions', { isDevelopment, videoId, error: e instanceof Error ? e.message : 'Unknown error' });
         return undefined;
       }
     })()?.['playerCaptionsTracklistRenderer'];
 
     if (!captions) {
-      this.log('No captions found', { videoId });
+      this.log('No captions found', { isDevelopment, videoId });
       throw new YoutubeTranscriptDisabledError(videoId);
     }
 
     if (!('captionTracks' in captions)) {
-      this.log('No caption tracks found', { videoId });
+      this.log('No caption tracks found', { isDevelopment, videoId });
       throw new YoutubeTranscriptNotAvailableError(videoId);
     }
 
@@ -139,7 +140,7 @@ export class YoutubeTranscript {
         (track: { languageCode: string }) => track.languageCode === config?.lang
       )
     ) {
-      this.log('No caption tracks found', { videoId });
+      this.log('No caption tracks found', { isDevelopment, videoId });
       throw new YoutubeTranscriptNotAvailableLanguageError(
         config?.lang,
         captions.captionTracks.map((track: { languageCode: string }) => track.languageCode),
@@ -154,7 +155,7 @@ export class YoutubeTranscript {
           )
         : captions.captionTracks[0]
     ).baseUrl;
-    this.log('Transcript URL', { videoId, transcriptURL });
+    this.log('Transcript URL', { isDevelopment, videoId, transcriptURL });
 
     const transcriptResponse = await fetch(transcriptURL, {
       headers: {
@@ -163,12 +164,13 @@ export class YoutubeTranscript {
       },
     });
     if (!transcriptResponse.ok) {
-      this.log('Transcript not available', { videoId });
+      this.log('Transcript not available', { isDevelopment, videoId });
       throw new YoutubeTranscriptNotAvailableError(videoId);
     }
     const transcriptBody = await transcriptResponse.text();
     const results = Array.from(transcriptBody.matchAll(RE_XML_TRANSCRIPT));
     this.log('Transcript fetched successfully', {
+          isDevelopment,
           videoId,
           itemCount: results.length,
           text: results[0][3],
@@ -196,7 +198,7 @@ export class YoutubeTranscript {
     if (matchId && matchId.length) {
       return matchId[1];
     }
-    this.log('Impossible to retrieve Youtube video ID', { videoId });
+    this.log('Impossible to retrieve Youtube video ID', { isDevelopment, videoId });
     throw new YoutubeTranscriptError(
       'Impossible to retrieve Youtube video ID.'
     );
