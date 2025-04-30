@@ -6,11 +6,6 @@
     }
   ],
   "functions": {
-    "src/app/api/summarize/route.js": {
-      "runtime": "nodejs20.x",
-      "memory": 1024,
-      "maxDuration": 60
-    },
     "src/app/api/**/*": {
       "memory": 1024,
       "maxDuration": 60
