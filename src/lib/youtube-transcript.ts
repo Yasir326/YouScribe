@@ -1,4 +1,6 @@
 import { TranscriptConfig, TranscriptResponse } from '../type';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+import fetch from 'node-fetch';
 
 import { LogData } from '../type';
 
@@ -10,7 +12,11 @@ const RE_XML_TRANSCRIPT =
   /<text start="([^"]*)" dur="([^"]*)">([^<]*)<\/text>/g;
 
 const isDevelopment = process.env.NODE_ENV === 'development';
+const proxyAgent = new HttpsProxyAgent(
+  `https://${process.env.SMARTPROXY_USERNAME}:${process.env.SMARTPROXY_PASSWORD}@gate.decodo.com:10001`
+);
 
+const isProxyEnabled = process.env.SMARTPROXY_USERNAME && process.env.SMARTPROXY_PASSWORD;
 export class YoutubeTranscriptError extends Error {
   constructor(message: string) {
     super(`[YoutubeTranscript] 🚨 ${message}`);
@@ -73,11 +79,13 @@ export class YoutubeTranscript {
     videoId: string,
     config?: TranscriptConfig
   ): Promise<TranscriptResponse[]> {
-    this.log('Starting transcript fetch', {isDevelopment, videoId });
+    const proxyEnabled = process.env.SMARTPROXY_USERNAME && process.env.SMARTPROXY_PASSWORD;
+    this.log('Starting transcript fetch', {isDevelopment, videoId, proxyEnabled: proxyEnabled ? true : undefined});
     const identifier = this.retrieveVideoId(videoId);
     const videoPageResponse = await fetch(
       `https://www.youtube.com/watch?v=${identifier}`,
       {
+        agent: isDevelopment ? undefined : proxyAgent,
         headers: {
           ...(config?.lang && { 'Accept-Language': config.lang }),
           'User-Agent': USER_AGENT,
@@ -158,6 +166,7 @@ export class YoutubeTranscript {
     this.log('Transcript URL', { isDevelopment, videoId, transcriptURL });
 
     const transcriptResponse = await fetch(transcriptURL, {
+      agent: isDevelopment ? undefined : proxyAgent,
       headers: {
         ...(config?.lang && { 'Accept-Language': config.lang }),
         'User-Agent': USER_AGENT,

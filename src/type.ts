@@ -53,4 +53,5 @@ export interface LogData {
   duration?: number;
   offset?: number;
   lang?: string;
+  proxyEnabled?: boolean;
 }
