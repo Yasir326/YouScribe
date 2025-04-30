@@ -18,10 +18,9 @@ const getEnv = (name: string): string => {
   }
 };
 
-// Check if we're in development mode
+
 const isDevelopment = isServer && getEnv('NODE_ENV') === 'development';
 
-// Simple in-memory cache for transcripts (server-side only)
 const transcriptCache: Record<
   string,
   {
@@ -30,7 +29,6 @@ const transcriptCache: Record<
   }
 > = {};
 
-// Cache expiration time: 1 hour
 const CACHE_TTL = 3600000;
 
 const SMARTPROXY_USERNAME = getEnv('SMARTPROXY_USERNAME');
@@ -40,7 +38,7 @@ const SMARTPROXY_PORT = '30004';
 
 const proxyUrl =
   isServer && SMARTPROXY_USERNAME && SMARTPROXY_PASSWORD
-    ? `http://${SMARTPROXY_USERNAME}:${SMARTPROXY_PASSWORD}@${SMARTPROXY_HOST}:${SMARTPROXY_PORT}`
+    ? `https://${SMARTPROXY_USERNAME}:${SMARTPROXY_PASSWORD}@${SMARTPROXY_HOST}:${SMARTPROXY_PORT}`
     : null;
 
 if (isServer) {
@@ -95,7 +93,7 @@ export interface TranscriptConfig {
   lang?: string;
   useProxy?: boolean;
   skipCache?: boolean;
-  forceNoProxy?: boolean; // New option to force disable proxy
+  forceNoProxy?: boolean;
 }
 
 export interface TranscriptResponse {
@@ -132,13 +130,19 @@ interface LogData {
   trackCount?: number;
   hasCaptionsData?: boolean;
   captionsData?: string | null;
+  isDevelopment?: boolean;
+  requestConfig?: {
+    headers?: Record<string, string>;
+    httpAgent?: string;
+    params?: Record<string, string>;
+    validateStatus?: (status: number) => boolean;
+  };
 }
 
 /**
  * Class to retrieve transcript if exist
  */
 export class YoutubeTranscript {
-  // Set a reasonable global timeout - 5 seconds to stay well under serverless function limits
   private static TIMEOUT = 5000;
 
   private static log(message: string, data?: LogData) {
@@ -254,114 +258,156 @@ export class YoutubeTranscript {
 
       const defaultHeaders = {
         'User-Agent': USER_AGENT,
-        'Accept': 'text/html',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
         'Accept-Language': config?.lang || 'en-US',
         'Cookie': 'CONSENT=YES+1',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'Upgrade-Insecure-Requests': '1'
       };
 
-      const videoPageResponse = await Promise.race([
-        axios.get(`https://www.youtube.com/watch?v=${videoId}`, {
-          headers: defaultHeaders,
-          httpAgent: proxyAgent,
-          params: { ...(config?.lang && { hl: config.lang }), v: videoId },
-          validateStatus: (status) => status < 500
-        }),
-        timeoutPromise
-      ]) as { data: unknown; status: number };
+      // In development mode, use direct connection without proxy
+      const requestConfig = {
+        headers: defaultHeaders,
+        httpAgent: isDevelopment ? undefined : proxyAgent,
+        params: { ...(config?.lang && { hl: config.lang }), v: videoId },
+        validateStatus: (status: number) => status < 500
+      };
 
-      const videoPageBody = videoPageResponse.data;
-
-      this.log('Video page fetched', {
-        videoId,
-        status: videoPageResponse.status,
-        bodyLength: JSON.stringify(videoPageBody).length,
-        hasCaptions: JSON.stringify(videoPageBody).includes('"captions":'),
-        hasVideoDetails: JSON.stringify(videoPageBody).includes('"videoDetails":'),
-        hasRecaptcha: JSON.stringify(videoPageBody).includes('class="g-recaptcha"'),
-        jsonPreview: JSON.stringify(videoPageBody).substring(0, 500) + '...',
+      this.log('Making request with config:', { 
+        videoId, 
+        isDevelopment,
+        usingProxy: !!proxyAgent,
+        requestConfig: {
+          ...requestConfig,
+          httpAgent: requestConfig.httpAgent ? 'ProxyAgent' : 'None'
+        }
       });
 
-      // Try to find captions in the response data
-      let captionsData = null;
-      if (Array.isArray(videoPageBody)) {
-        for (const item of videoPageBody) {
-          if (item?.player?.captions?.playerCaptionsTracklistRenderer) {
-            captionsData = item.player.captions.playerCaptionsTracklistRenderer;
-            break;
+      try {
+        const videoPageResponse = await Promise.race([
+          axios.get(`https://www.youtube.com/watch?v=${videoId}`, requestConfig),
+          timeoutPromise
+        ]) as { data: unknown; status: number };
+
+        const videoPageBody = videoPageResponse.data;
+
+        this.log('Video page fetched', {
+          videoId,
+          status: videoPageResponse.status,
+          bodyLength: JSON.stringify(videoPageBody).length,
+          hasCaptions: JSON.stringify(videoPageBody).includes('"captions":'),
+          hasVideoDetails: JSON.stringify(videoPageBody).includes('"videoDetails":'),
+          hasRecaptcha: JSON.stringify(videoPageBody).includes('class="g-recaptcha"'),
+          jsonPreview: JSON.stringify(videoPageBody).substring(0, 500) + '...'
+        });
+
+        // Try to find captions in the response data
+        let captionsData = null;
+        if (Array.isArray(videoPageBody)) {
+          for (const item of videoPageBody) {
+            if (item?.player?.captions?.playerCaptionsTracklistRenderer) {
+              captionsData = item.player.captions.playerCaptionsTracklistRenderer;
+              break;
+            }
+          }
+        } else if (typeof videoPageBody === 'string' && videoPageBody.includes('captionTracks')) {
+          // Try parsing captions from HTML response
+          const match = videoPageBody.match(/"captionTracks":\s*(\[[^]]+\])/);
+          if (match && match[1]) {
+            try {
+              captionsData = { captionTracks: JSON.parse(match[1]) };
+            } catch (e) {
+              this.log('Failed to parse captions from HTML', { videoId, error: e instanceof Error ? e.message : 'Unknown error' });
+            }
           }
         }
-      }
 
-      this.log('Captions data found', {
-        videoId,
-        hasCaptionsData: !!captionsData,
-        captionsData: captionsData ? JSON.stringify(captionsData).substring(0, 200) + '...' : null,
-      });
+        this.log('Captions data found', {
+          videoId,
+          hasCaptionsData: !!captionsData,
+          captionsData: captionsData ? JSON.stringify(captionsData).substring(0, 200) + '...' : null,
+        });
 
-      if (!captionsData) {
-        if (JSON.stringify(videoPageBody).includes('class="g-recaptcha"')) {
-          throw new YoutubeTranscriptTooManyRequestError();
+        if (!captionsData) {
+          if (JSON.stringify(videoPageBody).includes('class="g-recaptcha"')) {
+            throw new YoutubeTranscriptTooManyRequestError();
+          }
+          if (!JSON.stringify(videoPageBody).includes('"playabilityStatus":')) {
+            throw new YoutubeTranscriptVideoUnavailableError(videoId);
+          }
+          throw new YoutubeTranscriptDisabledError(videoId);
         }
-        if (!JSON.stringify(videoPageBody).includes('"playabilityStatus":')) {
-          throw new YoutubeTranscriptVideoUnavailableError(videoId);
+
+        if (!captionsData.captionTracks || captionsData.captionTracks.length === 0) {
+          throw new YoutubeTranscriptNotAvailableError(videoId);
         }
-        throw new YoutubeTranscriptDisabledError(videoId);
-      }
 
-      if (!captionsData.captionTracks || captionsData.captionTracks.length === 0) {
-        throw new YoutubeTranscriptNotAvailableError(videoId);
-      }
+        const transcriptURL = (
+          config?.lang
+            ? captionsData.captionTracks.find(
+                (track: { languageCode: string }) => track.languageCode === config?.lang
+              )
+            : captionsData.captionTracks[0]
+        ).baseUrl;
 
-      const transcriptURL = (
-        config?.lang
-          ? captionsData.captionTracks.find(
-              (track: { languageCode: string }) => track.languageCode === config?.lang
-            )
-          : captionsData.captionTracks[0]
-      ).baseUrl;
+        this.log('Fetching transcript', { videoId, transcriptURL });
 
-      this.log('Fetching transcript', { videoId, transcriptURL });
+        const transcriptResponse = (await Promise.race([
+          axios.get(transcriptURL, {
+            httpAgent: proxyAgent,
+            headers: {
+              ...(config?.lang && { 'Accept-Language': config.lang }),
+              'User-Agent': USER_AGENT,
+            },
+          }),
+          timeoutPromise,
+        ])) as { data: string; status: number };
 
-      const transcriptResponse = (await Promise.race([
-        axios.get(transcriptURL, {
-          httpAgent: proxyAgent,
-          headers: {
-            ...(config?.lang && { 'Accept-Language': config.lang }),
-            'User-Agent': USER_AGENT,
-          },
-        }),
-        timeoutPromise,
-      ])) as { data: string; status: number };
-
-      if (transcriptResponse.status !== 200) {
-        throw new YoutubeTranscriptNotAvailableError(videoId);
-      }
-
-      const transcriptBody = transcriptResponse.data;
-      const transcriptItems: TranscriptResponse[] = [];
-
-      const regex = /<text start="([^"]*)" dur="([^"]*)">([^<]*)<\/text>/g;
-      let match;
-      while ((match = regex.exec(transcriptBody)) !== null) {
-        if (match && match.length >= 4) {
-          transcriptItems.push({
-            text: match[3],
-            duration: parseFloat(match[2]),
-            offset: parseFloat(match[1]),
-            lang: config?.lang ?? captionsData.captionTracks[0].languageCode,
-          });
+        if (transcriptResponse.status !== 200) {
+          throw new YoutubeTranscriptNotAvailableError(videoId);
         }
+
+        const transcriptBody = transcriptResponse.data;
+        const transcriptItems: TranscriptResponse[] = [];
+
+        const regex = /<text start="([^"]*)" dur="([^"]*)">([^<]*)<\/text>/g;
+        let match;
+        while ((match = regex.exec(transcriptBody)) !== null) {
+          if (match && match.length >= 4) {
+            transcriptItems.push({
+              text: match[3],
+              duration: parseFloat(match[2]),
+              offset: parseFloat(match[1]),
+              lang: config?.lang ?? captionsData.captionTracks[0].languageCode,
+            });
+          }
+        }
+
+        this.log('Transcript fetched successfully', {
+          videoId,
+          itemCount: transcriptItems.length,
+          firstItem: transcriptItems[0],
+        });
+
+        return transcriptItems;
+      } catch (error) {
+        this.log('Error in fetchTranscriptWithTimeout', {
+          videoId,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          status: axios.isAxiosError(error) ? error.response?.status : undefined,
+        });
+
+        if (axios.isAxiosError(error) && error.response?.status === 407) {
+          this.log('Proxy auth failed, retrying without proxy', { videoId });
+          return this.fetchTranscriptWithTimeout(videoId, { ...config, forceNoProxy: true });
+        }
+        throw error;
       }
-
-      this.log('Transcript fetched successfully', {
-        videoId,
-        itemCount: transcriptItems.length,
-        firstItem: transcriptItems[0],
-      });
-
-      return transcriptItems;
     } catch (error) {
       this.log('Error in fetchTranscriptWithTimeout', {
         videoId,
