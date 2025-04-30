@@ -16,7 +16,6 @@ const proxyAgent = new HttpsProxyAgent(
   `https://${process.env.SMARTPROXY_USERNAME}:${process.env.SMARTPROXY_PASSWORD}@gate.decodo.com:10001`
 );
 
-const isProxyEnabled = process.env.SMARTPROXY_USERNAME && process.env.SMARTPROXY_PASSWORD;
 export class YoutubeTranscriptError extends Error {
   constructor(message: string) {
     super(`[YoutubeTranscript] 🚨 ${message}`);
