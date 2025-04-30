@@ -33,7 +33,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.5",
-    "framer-motion": "^12.4.2",
+    "framer-motion": "^10.18.0",
     "http-proxy-agent": "^7.0.2",
     "https-proxy-agent": "^7.0.6",
     "lucide-react": "^0.447.0",
