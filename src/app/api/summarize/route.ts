@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
-// import { YoutubeTranscript } from '@/src/lib/youtube-transcript';
+import { YoutubeTranscript } from '@/src/lib/youtube-transcript';
 import { db } from '@/src/db';
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
-import { YoutubeTranscript } from 'youtube-transcript';
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
@@ -122,15 +121,8 @@ export async function POST(req: NextRequest) {
         skipCache: isDevelopment,
         forceNoProxy: isDevelopment,
       });
-  
-      // const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId, {
-      //   useProxy: !isDevelopment,
-      //   skipCache: isDevelopment,
-      //   forceNoProxy: isDevelopment,
-      // });
 
-      const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId)
-
+      const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId);
 
       if (!transcriptArray || transcriptArray.length === 0) {
         console.error(`[Summarize] No transcript available for video ${videoId}`);

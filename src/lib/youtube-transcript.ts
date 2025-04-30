@@ -1,51 +1,13 @@
-import axios from 'axios';
-import { HttpsProxyAgent } from 'https-proxy-agent';
+import { TranscriptConfig, TranscriptResponse } from '../type';
+
+import { LogData } from '../type';
 
 const RE_YOUTUBE =
   /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
 const USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36,gzip(gfe)';
-
-const isServer = typeof window === 'undefined';
-
-const getEnv = (name: string): string => {
-  if (!isServer) return '';
-
-  try {
-    return process?.env?.[name] || '';
-  } catch {
-    return '';
-  }
-};
-
-
-const isDevelopment = isServer && getEnv('NODE_ENV') === 'development';
-
-const transcriptCache: Record<
-  string,
-  {
-    timestamp: number;
-    data: TranscriptResponse[];
-  }
-> = {};
-
-const CACHE_TTL = 3600000;
-
-const SMARTPROXY_USERNAME = getEnv('SMARTPROXY_USERNAME');
-const SMARTPROXY_PASSWORD = getEnv('SMARTPROXY_PASSWORD');
-const SMARTPROXY_HOST = 'gate.decodo.com';
-const SMARTPROXY_PORT = '30004';
-
-const proxyUrl =
-  isServer && SMARTPROXY_USERNAME && SMARTPROXY_PASSWORD
-    ? `https://${SMARTPROXY_USERNAME}:${SMARTPROXY_PASSWORD}@${SMARTPROXY_HOST}:${SMARTPROXY_PORT}`
-    : null;
-
-if (isServer) {
-  console.log(
-    `[YouTube Transcript] Proxy ${proxyUrl ? 'configured' : 'not configured'}, Development mode: ${isDevelopment}`
-  );
-}
+const RE_XML_TRANSCRIPT =
+  /<text start="([^"]*)" dur="([^"]*)">([^<]*)<\/text>/g;
 
 export class YoutubeTranscriptError extends Error {
   constructor(message: string) {
@@ -89,214 +51,39 @@ export class YoutubeTranscriptNotAvailableLanguageError extends YoutubeTranscrip
   }
 }
 
-export interface TranscriptConfig {
-  lang?: string;
-  useProxy?: boolean;
-  skipCache?: boolean;
-  forceNoProxy?: boolean;
-}
-
-export interface TranscriptResponse {
-  text: string;
-  duration: number;
-  offset: number;
-  lang?: string;
-}
-
-interface LogData {
-  videoId: string;
-  config?: TranscriptConfig;
-  itemCount?: number;
-  error?: string;
-  status?: number;
-  useProxy?: boolean;
-  proxyConfigured?: boolean;
-  timeout?: number;
-  usingProxy?: boolean;
-  bodyLength?: number;
-  availableLanguages?: string[];
-  transcriptURL?: string;
-  firstItem?: TranscriptResponse;
-  parseError?: unknown;
-  captionsMatch?: RegExpMatchArray | null;
-  hasCaptions?: boolean;
-  hasVideoDetails?: boolean;
-  hasRecaptcha?: boolean;
-  matchFound?: boolean;
-  matchLength?: number;
-  matchContent?: string | null;
-  jsonLength?: number;
-  jsonPreview?: string;
-  trackCount?: number;
-  hasCaptionsData?: boolean;
-  captionsData?: string | null;
-  isDevelopment?: boolean;
-  requestConfig?: {
-    headers?: Record<string, string>;
-    httpAgent?: string;
-    params?: Record<string, string>;
-    validateStatus?: (status: number) => boolean;
-  };
-}
-
 /**
  * Class to retrieve transcript if exist
  */
 export class YoutubeTranscript {
-  private static TIMEOUT = 5000;
+  /**
+   * Fetch transcript from YTB Video
+   * @param videoId Video url or video identifier
+   * @param config Get transcript in a specific language ISO
+   */
 
   private static log(message: string, data?: LogData) {
-    if (isServer) {
       const timestamp = new Date().toISOString();
       const logData = data ? `\nData: ${JSON.stringify(data, null, 2)}` : '';
       console.log(`[${timestamp}] [YouTube Transcript] ${message}${logData}`);
-    }
   }
 
-  /**
-   * Fetch transcript from YTB Video with timeout and retry logic
-   * @param videoId Video url or video identifier
-   * @param config Get transcript in a specific language ISO and proxy config
-   */
   public static async fetchTranscript(
     videoId: string,
     config?: TranscriptConfig
   ): Promise<TranscriptResponse[]> {
+    this.log('Starting transcript fetch', { videoId });
     const identifier = this.retrieveVideoId(videoId);
-    const cacheKey = `${identifier}_${config?.lang || 'default'}`;
-
-    this.log('Starting transcript fetch', { videoId: identifier, config });
-
-    if (isServer && !config?.skipCache && transcriptCache[cacheKey]) {
-      const cached = transcriptCache[cacheKey];
-      if (Date.now() - cached.timestamp < CACHE_TTL) {
-        this.log('Using cached transcript', { videoId: identifier });
-        return cached.data;
-      } else {
-        this.log('Cache expired', { videoId: identifier });
-        delete transcriptCache[cacheKey];
+    const videoPageResponse = await fetch(
+      `https://www.youtube.com/watch?v=${identifier}`,
+      {
+        headers: {
+          ...(config?.lang && { 'Accept-Language': config.lang }),
+          'User-Agent': USER_AGENT,
+        },
       }
-    }
-
-    try {
-      const result = await this.fetchTranscriptWithTimeout(identifier, config);
-
-      if (isServer) {
-        this.log('Storing in cache', { videoId: identifier, itemCount: result.length });
-        transcriptCache[cacheKey] = {
-          timestamp: Date.now(),
-          data: result,
-        };
-      }
-
-      return result;
-    } catch (error) {
-      this.log('Error fetching transcript', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        videoId: identifier,
-        status: axios.isAxiosError(error) ? error.response?.status : undefined,
-      });
-
-      if (
-        axios.isAxiosError(error) &&
-        error.response?.status === 407 &&
-        isDevelopment &&
-        !config?.forceNoProxy
-      ) {
-        this.log('Proxy auth failed in dev mode, retrying without proxy', { videoId: identifier });
-        return this.fetchTranscriptWithTimeout(identifier, { ...config, forceNoProxy: true });
-      }
-
-      if (
-        axios.isAxiosError(error) &&
-        error.response &&
-        error.response.status >= 400 &&
-        error.response.status < 500 &&
-        error.response.status !== 407
-      ) {
-        throw error;
-      }
-
-      throw error;
-    }
-  }
-
-  /**
-   * Internal method to fetch transcript with a timeout
-   */
-  private static async fetchTranscriptWithTimeout(
-    videoId: string,
-    config?: TranscriptConfig
-  ): Promise<TranscriptResponse[]> {
-    const useProxy =
-      isServer &&
-      !config?.forceNoProxy &&
-      config?.useProxy !== false &&
-      proxyUrl !== null &&
-      !isDevelopment;
-
-    this.log('Starting transcript fetch with timeout', {
-      videoId,
-      useProxy,
-      proxyConfigured: !!proxyUrl,
-      timeout: this.TIMEOUT,
-    });
-
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('YouTube transcript fetch timed out')), this.TIMEOUT);
-    });
-
-    try {
-      const proxyAgent =
-        useProxy && SMARTPROXY_USERNAME && SMARTPROXY_PASSWORD
-          ? new HttpsProxyAgent(
-              `https://${SMARTPROXY_USERNAME}:${SMARTPROXY_PASSWORD}@${SMARTPROXY_HOST}:${SMARTPROXY_PORT}`
-            )
-          : undefined;
-
-      this.log('Fetching video page', { videoId, usingProxy: !!proxyAgent });
-
-      const defaultHeaders = {
-        'User-Agent': USER_AGENT,
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-        'Accept-Language': config?.lang || 'en-US',
-        'Cookie': 'CONSENT=YES+1',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'none',
-        'Sec-Fetch-User': '?1',
-        'Upgrade-Insecure-Requests': '1'
-      };
-
-      // In development mode, use direct connection without proxy
-      const requestConfig = {
-        headers: defaultHeaders,
-        httpAgent: isDevelopment ? undefined : proxyAgent,
-        params: { ...(config?.lang && { hl: config.lang }), v: videoId },
-        validateStatus: (status: number) => status < 500
-      };
-
-      this.log('Making request with config:', { 
-        videoId, 
-        isDevelopment,
-        usingProxy: !!proxyAgent,
-        requestConfig: {
-          ...requestConfig,
-          httpAgent: requestConfig.httpAgent ? 'ProxyAgent' : 'None'
-        }
-      });
-
-      try {
-        const videoPageResponse = await Promise.race([
-          axios.get(`https://www.youtube.com/watch?v=${videoId}`, requestConfig),
-          timeoutPromise
-        ]) as { data: unknown; status: number };
-
-        const videoPageBody = videoPageResponse.data;
-
-        this.log('Video page fetched', {
+    );
+    const videoPageBody = await videoPageResponse.text();
+    this.log('Video page fetched', {
           videoId,
           status: videoPageResponse.status,
           bodyLength: JSON.stringify(videoPageBody).length,
@@ -306,121 +93,93 @@ export class YoutubeTranscript {
           jsonPreview: JSON.stringify(videoPageBody).substring(0, 500) + '...'
         });
 
-        // Try to find captions in the response data
-        let captionsData = null;
-        if (Array.isArray(videoPageBody)) {
-          for (const item of videoPageBody) {
-            if (item?.player?.captions?.playerCaptionsTracklistRenderer) {
-              captionsData = item.player.captions.playerCaptionsTracklistRenderer;
-              break;
-            }
-          }
-        } else if (typeof videoPageBody === 'string' && videoPageBody.includes('captionTracks')) {
-          // Try parsing captions from HTML response
-          const match = videoPageBody.match(/"captionTracks":\s*(\[[^]]+\])/);
-          if (match && match[1]) {
-            try {
-              captionsData = { captionTracks: JSON.parse(match[1]) };
-            } catch (e) {
-              this.log('Failed to parse captions from HTML', { videoId, error: e instanceof Error ? e.message : 'Unknown error' });
-            }
-          }
-        }
+    const splittedHTML = videoPageBody.split('"captions":');
 
-        this.log('Captions data found', {
-          videoId,
-          hasCaptionsData: !!captionsData,
-          captionsData: captionsData ? JSON.stringify(captionsData).substring(0, 200) + '...' : null,
-        });
-
-        if (!captionsData) {
-          if (JSON.stringify(videoPageBody).includes('class="g-recaptcha"')) {
-            throw new YoutubeTranscriptTooManyRequestError();
-          }
-          if (!JSON.stringify(videoPageBody).includes('"playabilityStatus":')) {
-            throw new YoutubeTranscriptVideoUnavailableError(videoId);
-          }
-          throw new YoutubeTranscriptDisabledError(videoId);
-        }
-
-        if (!captionsData.captionTracks || captionsData.captionTracks.length === 0) {
-          throw new YoutubeTranscriptNotAvailableError(videoId);
-        }
-
-        const transcriptURL = (
-          config?.lang
-            ? captionsData.captionTracks.find(
-                (track: { languageCode: string }) => track.languageCode === config?.lang
-              )
-            : captionsData.captionTracks[0]
-        ).baseUrl;
-
-        this.log('Fetching transcript', { videoId, transcriptURL });
-
-        const transcriptResponse = (await Promise.race([
-          axios.get(transcriptURL, {
-            httpAgent: proxyAgent,
-            headers: {
-              ...(config?.lang && { 'Accept-Language': config.lang }),
-              'User-Agent': USER_AGENT,
-            },
-          }),
-          timeoutPromise,
-        ])) as { data: string; status: number };
-
-        if (transcriptResponse.status !== 200) {
-          throw new YoutubeTranscriptNotAvailableError(videoId);
-        }
-
-        const transcriptBody = transcriptResponse.data;
-        const transcriptItems: TranscriptResponse[] = [];
-
-        const regex = /<text start="([^"]*)" dur="([^"]*)">([^<]*)<\/text>/g;
-        let match;
-        while ((match = regex.exec(transcriptBody)) !== null) {
-          if (match && match.length >= 4) {
-            transcriptItems.push({
-              text: match[3],
-              duration: parseFloat(match[2]),
-              offset: parseFloat(match[1]),
-              lang: config?.lang ?? captionsData.captionTracks[0].languageCode,
-            });
-          }
-        }
-
-        this.log('Transcript fetched successfully', {
-          videoId,
-          itemCount: transcriptItems.length,
-          firstItem: transcriptItems[0],
-        });
-
-        return transcriptItems;
-      } catch (error) {
-        this.log('Error in fetchTranscriptWithTimeout', {
-          videoId,
-          error: error instanceof Error ? error.message : 'Unknown error',
-          status: axios.isAxiosError(error) ? error.response?.status : undefined,
-        });
-
-        if (axios.isAxiosError(error) && error.response?.status === 407) {
-          this.log('Proxy auth failed, retrying without proxy', { videoId });
-          return this.fetchTranscriptWithTimeout(videoId, { ...config, forceNoProxy: true });
-        }
-        throw error;
+    if (splittedHTML.length <= 1) {
+      if (videoPageBody.includes('class="g-recaptcha"')) {
+        this.log('Captcha found', { videoId });
+        throw new YoutubeTranscriptTooManyRequestError();
       }
-    } catch (error) {
-      this.log('Error in fetchTranscriptWithTimeout', {
-        videoId,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        status: axios.isAxiosError(error) ? error.response?.status : undefined,
-      });
-
-      if (axios.isAxiosError(error) && error.response?.status === 407) {
-        this.log('Proxy auth failed, retrying without proxy', { videoId });
-        return this.fetchTranscriptWithTimeout(videoId, { ...config, forceNoProxy: true });
+      if (!videoPageBody.includes('"playabilityStatus":')) {
+        this.log('Video unavailable', { videoId });
+        throw new YoutubeTranscriptVideoUnavailableError(videoId);
       }
-      throw error;
+      this.log('Transcript disabled', { videoId });
+      throw new YoutubeTranscriptDisabledError(videoId);
     }
+
+
+    const captions = (() => {
+      try {
+        this.log('Parsing captions', { videoId });
+        return JSON.parse(
+          splittedHTML[1].split(',"videoDetails')[0].replace('\n', '')
+        );
+      } catch (e) {
+        this.log('Error parsing captions', { videoId, error: e instanceof Error ? e.message : 'Unknown error' });
+        return undefined;
+      }
+    })()?.['playerCaptionsTracklistRenderer'];
+
+    if (!captions) {
+      this.log('No captions found', { videoId });
+      throw new YoutubeTranscriptDisabledError(videoId);
+    }
+
+    if (!('captionTracks' in captions)) {
+      this.log('No caption tracks found', { videoId });
+      throw new YoutubeTranscriptNotAvailableError(videoId);
+    }
+
+    if (
+      config?.lang &&
+      !captions.captionTracks.some(
+        (track: { languageCode: string }) => track.languageCode === config?.lang
+      )
+    ) {
+      this.log('No caption tracks found', { videoId });
+      throw new YoutubeTranscriptNotAvailableLanguageError(
+        config?.lang,
+        captions.captionTracks.map((track: { languageCode: string }) => track.languageCode),
+        videoId
+      );
+    }
+
+    const transcriptURL = (
+      config?.lang
+        ? captions.captionTracks.find(
+            (track: { languageCode: string }) => track.languageCode === config?.lang
+          )
+        : captions.captionTracks[0]
+    ).baseUrl;
+    this.log('Transcript URL', { videoId, transcriptURL });
+
+    const transcriptResponse = await fetch(transcriptURL, {
+      headers: {
+        ...(config?.lang && { 'Accept-Language': config.lang }),
+        'User-Agent': USER_AGENT,
+      },
+    });
+    if (!transcriptResponse.ok) {
+      this.log('Transcript not available', { videoId });
+      throw new YoutubeTranscriptNotAvailableError(videoId);
+    }
+    const transcriptBody = await transcriptResponse.text();
+    const results = Array.from(transcriptBody.matchAll(RE_XML_TRANSCRIPT));
+    this.log('Transcript fetched successfully', {
+          videoId,
+          itemCount: results.length,
+          text: results[0][3],
+          duration: parseFloat(results[0][2]),
+          offset: parseFloat(results[0][1]),
+          lang: config?.lang ?? captions.captionTracks[0].languageCode,
+        });
+    return results.map((result) => ({
+      text: result[3],
+      duration: parseFloat(result[2]),
+      offset: parseFloat(result[1]),
+      lang: config?.lang ?? captions.captionTracks[0].languageCode,
+    }));
   }
 
   /**
@@ -435,6 +194,9 @@ export class YoutubeTranscript {
     if (matchId && matchId.length) {
       return matchId[1];
     }
-    throw new YoutubeTranscriptError('Impossible to retrieve Youtube video ID.');
+    this.log('Impossible to retrieve Youtube video ID', { videoId });
+    throw new YoutubeTranscriptError(
+      'Impossible to retrieve Youtube video ID.'
+    );
   }
 }
