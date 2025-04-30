@@ -1,3 +1,5 @@
+export const runtime = 'nodejs';
+
 import { TranscriptConfig, TranscriptResponse } from '../type';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import fetch from 'node-fetch';
