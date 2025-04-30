@@ -9,6 +9,8 @@ const USER_AGENT =
 const RE_XML_TRANSCRIPT =
   /<text start="([^"]*)" dur="([^"]*)">([^<]*)<\/text>/g;
 
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 export class YoutubeTranscriptError extends Error {
   constructor(message: string) {
     super(`[YoutubeTranscript] 🚨 ${message}`);
