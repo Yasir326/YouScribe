@@ -14,6 +14,23 @@ export interface TranscriptResponse {
   lang?: string;
 }
 
+export interface TranscriptSnippet {
+  text: string;
+  duration_ms: number;
+  start_ms: number;
+}
+
+export interface CacheEntry {
+  timestamp: number;
+  response: {
+    summary: {
+      id: string;
+      content: string;
+    };
+    transcript: string;
+  };
+}
+
 export interface LogData {
   videoId: string;
   config?: TranscriptConfig;

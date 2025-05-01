@@ -9,15 +9,11 @@ import OpenAI from 'openai';
 import { YoutubeTranscript } from '@/src/lib/youtube-transcript';
 import { db } from '@/src/db';
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
-interface CacheEntry {
-  timestamp: number;
-  response: any;
-}
+import { CacheEntry } from '@/src/type';
 
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const responseCache = new Map<string, CacheEntry>();
 
-// Check if we're in development mode
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 export async function POST(req: NextRequest) {
@@ -27,7 +23,6 @@ export async function POST(req: NextRequest) {
   );
 
   try {
-    // Parse request first to get URL for caching
     let requestData;
     try {
       requestData = await req.json();
@@ -41,10 +36,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing YouTube URL' }, { status: 400 });
     }
 
-    // Create a cache key for this request
     const cacheKey = `${url}_${quickMode ? 'quick' : 'full'}`;
 
-    // Check cache first (skip cache in development mode for easier testing)
     if (!isDevelopment) {
       const cachedResponse = responseCache.get(cacheKey);
       if (cachedResponse && Date.now() - cachedResponse.timestamp < CACHE_TTL) {
@@ -53,7 +46,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Validate user and permissions
     const { getUser } = getKindeServerSession();
     const user = await getUser();
 
@@ -62,7 +54,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get everything we need from the database in one go for better performance
     const dbUser = await db.user.findUnique({
       where: { id: user.id },
       select: {
@@ -94,7 +85,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Initialize OpenAI only once
     let openai: any;
     try {
       openai = new OpenAI({ apiKey: dbUser.openaiApiKey });
@@ -112,8 +102,7 @@ export async function POST(req: NextRequest) {
       `[Summarize] Processing video: ${videoId} in ${isDevelopment ? 'development' : 'production'} mode`
     );
 
-    // Fetch transcript with improved performance
-    let transcript: string;
+    let transcriptText: string;
     try {
       console.log(`[Summarize] Fetching transcript for ${videoId} with config:`, {
         useProxy: !isDevelopment,
@@ -132,8 +121,7 @@ export async function POST(req: NextRequest) {
         `[Summarize] Successfully fetched ${transcriptArray.length} transcript items for ${videoId}`
       );
 
-      // Join all transcript items directly, more efficiently
-      transcript = transcriptArray.map(item => item.text).join(' ');
+      transcriptText = transcriptArray.map(item => item.text).join(' ');
     } catch (transcriptError: any) {
       console.error('[Summarize] Transcript fetch error:', {
         error: transcriptError.message,
@@ -145,7 +133,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: transcriptError.message }, { status: 400 });
     }
 
-    // Calculate tier and quota only if we need to
     const tier = dbUser.planName?.includes('Pro') ? 'Pro' : 'Basic';
     const totalQuota = tier === 'Pro' ? Infinity : 100;
 
@@ -156,7 +143,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check rate limit only once per minute to reduce DB calls
     const now = new Date();
     const rateLimit = tier === 'Pro' ? 60 : 10;
 
@@ -171,20 +157,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Rate limit exceeded. Try again later.' }, { status: 429 });
     }
 
-    // Generate summary with optimized OpenAI call
-    const content = await generateSummary(transcript, tier, openai, quickMode);
+    const content = await generateSummary(transcriptText, tier, openai, quickMode);
 
-    // Update database with results - do in one transaction for efficiency
     await db.$transaction([
       db.user.update({ where: { id: user.id }, data: { usedQuota: { increment: 1 } } }),
       db.summary.create({ data: { title: content.split('\n')[0], content, userId: user.id } }),
       db.apiRequest.create({ data: { userId: user.id } }),
     ]);
 
-    // Create the response object
-    const responseData = { summary: { id: Date.now().toString(), content }, transcript };
+    const responseData = {
+      summary: { id: Date.now().toString(), content },
+      transcript: transcriptText,
+    };
 
-    // Store in cache (except in development)
     if (!isDevelopment) {
       responseCache.set(cacheKey, {
         timestamp: Date.now(),
@@ -203,12 +188,10 @@ export async function POST(req: NextRequest) {
 }
 
 function extractVideoId(url: string): string | null {
-  // Quick check for already-extracted IDs
   if (url.length === 11 && /^[A-Za-z0-9_-]{11}$/.test(url)) {
     return url;
   }
 
-  // Otherwise do regex match
   const regex =
     /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
   const match = url.match(regex);
@@ -227,12 +210,10 @@ async function generateSummary(
     Pro: ['gpt-4-turbo', 'gpt-4', 'gpt-4-0613', 'gpt-3.5-turbo'],
   };
 
-  // Choose appropriate model based on tier and mode
   const modelOptions = quickMode
     ? ['gpt-3.5-turbo']
     : modelsByTier[userTier as keyof typeof modelsByTier] || ['gpt-3.5-turbo'];
 
-  // Update token limits with max completion token limits
   const modelTokenLimits = {
     'gpt-4-turbo': 128000,
     'gpt-4': 8192,
@@ -241,7 +222,6 @@ async function generateSummary(
     'gpt-3.5-turbo': 16385,
   };
 
-  // Max completion tokens for each model (must be <= 4096 for most models)
   const maxCompletionTokens = {
     'gpt-4-turbo': 4096,
     'gpt-4': 4096,
@@ -250,46 +230,40 @@ async function generateSummary(
     'gpt-3.5-turbo': 4096,
   };
 
-  const systemAndPromptTokens = 500; // Approximate tokens for system and prompt text
+  const systemAndPromptTokens = 500;
 
   for (const model of modelOptions) {
     try {
-      // Get the context limit for this model
       const contextLimit = modelTokenLimits[model as keyof typeof modelTokenLimits] || 4096;
 
-      // Calculate safe max_tokens value (never more than the model allows)
       const safeMaxTokens = Math.min(
         maxCompletionTokens[model as keyof typeof maxCompletionTokens] || 2048,
-        Math.floor(contextLimit / 3) // Use at most 1/3 of context for completion
+        Math.floor(contextLimit / 3)
       );
 
-      // Calculate available tokens for input
       const availableInputTokens = contextLimit - systemAndPromptTokens - safeMaxTokens;
 
-      // Process transcript more efficiently - use simpler calculation
       let processedTranscript = transcript;
       if (transcript.length > availableInputTokens * 3 || quickMode) {
-        // Rough character to token ratio of about 3-4 chars per token
         const targetLength = quickMode
           ? transcript.length * 0.4
           : Math.floor(availableInputTokens * 3.5);
         processedTranscript = transcript.substring(0, targetLength) + '\n\n[Transcript truncated]';
       }
 
-      // Simplified prompts for better performance
       const promptContent = quickMode
         ? `YouTube transcript summary, concise format with title and 3 key points. Use emojis.\n\n${processedTranscript}`
-        : `Summarize this YouTube transcript with a title, detailed summary, and action steps.\n\n${processedTranscript}`;
+        : `Summarize this YouTube transcript with a title, detailed summary, and comprehensive action steps with emojis to ensure the user can take action and be successful.\n\n${processedTranscript}`;
 
       console.log(`Using model ${model} with max_tokens=${safeMaxTokens}`);
 
-      // Optimized OpenAI call with safe token limits
       const response = await openai.chat.completions.create({
         model,
         messages: [
           {
             role: 'system',
-            content: 'Create summaries in English with a title, summary section, and action steps.',
+            content:
+              'Create detailed summaries in English with a title, summary section, and comprehensive action steps to ensure the user can take action and be successful.',
           },
           { role: 'user', content: promptContent },
         ],

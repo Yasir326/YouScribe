@@ -7,4 +7,3 @@ export default async function ApiGuide() {
   if (!user) return null;
   return <ApiGuideClient user={user} />;
 }
-  

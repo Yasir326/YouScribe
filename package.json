@@ -52,6 +52,7 @@
     "stripe": "^17.6.0",
     "tailwind-merge": "^2.5.3",
     "tailwindcss-animate": "^1.0.7",
+    "youtubei.js": "^13.4.0",
     "zod": "^3.24.3"
   },
   "devDependencies": {
