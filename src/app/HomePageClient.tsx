@@ -12,7 +12,7 @@ import { KindeUser } from '@kinde-oss/kinde-auth-nextjs/types';
 import NavbarLoggedIn from './components/NavbarLoggedIn';
 
 interface HomePageClientProps {
-  user: KindeUser<Record<string, unknown>>;
+  user: KindeUser<Record<string, unknown>> | null;
   suppressHydrationWarning?: boolean;
 }
 
