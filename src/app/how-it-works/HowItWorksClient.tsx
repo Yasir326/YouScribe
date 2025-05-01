@@ -7,7 +7,7 @@ import { KindeUser } from '@kinde-oss/kinde-auth-nextjs/types';
 import { RegisterLink } from '@kinde-oss/kinde-auth-nextjs/server';
 
 interface HowItWorksClientProps {
-  user: KindeUser<Record<string, unknown>>;
+  user: KindeUser<Record<string, unknown>> | null;
 }
 
 const HowItWorksClient = ({ user }: HowItWorksClientProps) => {
