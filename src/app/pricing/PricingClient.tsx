@@ -167,7 +167,7 @@ const PricingClient = ({ user }: PricingClientProps) => {
             transition={{ duration: 0.5, delay: 0.4 }}
           >
             <h3 className="text-white text-lg font-semibold mb-3">
-              🔑 Important: API Key Required
+              🔑 Important: API Key Required: But don&apos;t worry, it&apos;s easy and we&apos;ll guide you through it🤗!
             </h3>
             <p className="text-gray-400 text-sm mb-4">
               You Learn Now requires an OpenAI API key to generate summaries. This gives you:
