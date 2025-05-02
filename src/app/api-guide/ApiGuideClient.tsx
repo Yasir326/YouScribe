@@ -17,7 +17,7 @@ import Navbar from '../components/Navbar';
 import NavbarLoggedIn from '../components/NavbarLoggedIn';
 
 interface ApiGuideClientProps {
-  user: KindeUser<Record<string, unknown>>;
+  user: KindeUser<Record<string, unknown>> | null;
 }
 
 const ApiGuideClient = ({ user }: ApiGuideClientProps) => {
