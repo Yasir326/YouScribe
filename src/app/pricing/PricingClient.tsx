@@ -159,6 +159,28 @@ const PricingClient = ({ user }: PricingClientProps) => {
           </TooltipProvider>
         </div>
 
+        <div className="mt-16 text-center">
+          <motion.div
+            className="max-w-3xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <h3 className="text-white text-2xl font-semibold mb-6">
+              How to Setup Your API Key
+            </h3>
+            <div className="relative aspect-video rounded-lg overflow-hidden shadow-2xl">
+              <iframe
+                className="absolute top-0 left-0 w-full h-full"
+                src="https://www.youtube.com/embed/3ws595rv5Ps"
+                title="YouLearnNow Demo"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </motion.div>
+        </div>
+
         <div className="mt-8 text-center">
           <motion.div
             className="p-6 bg-gray-900 rounded-lg inline-block max-w-2xl"

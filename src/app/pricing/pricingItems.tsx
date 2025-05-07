@@ -11,6 +11,20 @@ type PricingItem = {
   price: number;
   isOneTime: boolean;
   features: Feature[];
+  tokenUsage: {
+    model: string;
+    contextWindow: number;
+    typicalUsage: {
+      systemPrompt: number;
+      transcript: number;
+      summary: number;
+      totalPerSummary: number;
+    };
+    estimatedCost: {
+      perSummary: string;
+      perToken: string;
+    };
+  };
 };
 
 export const pricingItems: PricingItem[] = [
@@ -20,6 +34,20 @@ export const pricingItems: PricingItem[] = [
     quota: 100,
     price: 19.99,
     isOneTime: true,
+    tokenUsage: {
+      model: 'GPT-3.5 Turbo',
+      contextWindow: 16385,
+      typicalUsage: {
+        systemPrompt: 500,
+        transcript: 4000,
+        summary: 1500,
+        totalPerSummary: 6000,
+      },
+      estimatedCost: {
+        perSummary: '$0.012',
+        perToken: '$0.000002',
+      },
+    },
     features: [
       {
         text: '100 video summaries',
@@ -30,7 +58,7 @@ export const pricingItems: PricingItem[] = [
       },
       {
         text: 'Standard quality summaries',
-        footnote: 'Powered by GPT-3.5',
+        footnote: 'Powered by GPT-3.5 Turbo (16K context)',
       },
       {
         text: 'Priority support',
@@ -40,6 +68,10 @@ export const pricingItems: PricingItem[] = [
         text: 'Use your own OpenAI API key',
         footnote: 'Bring your own API key for additional cost savings',
       },
+      {
+        text: '~6,000 tokens per summary',
+        footnote: 'Including system prompt, transcript, and summary generation',
+      },
     ],
   },
   {
@@ -48,6 +80,20 @@ export const pricingItems: PricingItem[] = [
     quota: 'unlimited',
     price: 49.99,
     isOneTime: true,
+    tokenUsage: {
+      model: 'GPT-4 Turbo',
+      contextWindow: 128000,
+      typicalUsage: {
+        systemPrompt: 500,
+        transcript: 8000,
+        summary: 3000,
+        totalPerSummary: 11500,
+      },
+      estimatedCost: {
+        perSummary: '$0.12',
+        perToken: '$0.00001',
+      },
+    },
     features: [
       {
         text: 'Unlimited video summaries',
@@ -58,7 +104,7 @@ export const pricingItems: PricingItem[] = [
       },
       {
         text: 'Highest quality summaries',
-        footnote: 'Powered by GPT-4',
+        footnote: 'Powered by GPT-4 Turbo (128K context)',
       },
       {
         text: 'Priority support',
@@ -66,6 +112,10 @@ export const pricingItems: PricingItem[] = [
       {
         text: 'Use your own OpenAI API key',
         footnote: 'Bring your own API key for additional cost savings',
+      },
+      {
+        text: '~11,500 tokens per summary',
+        footnote: 'Including system prompt, transcript, and summary generation',
       },
     ],
   },
