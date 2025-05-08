@@ -104,80 +104,96 @@ export const appRouter = router({
     });
   }),
 
-  createStripeSession: privateProcedure.mutation(async ({ ctx }) => {
-    const { userId } = ctx;
-    const billingUrl = absoluteUrl('/dashboard/billing');
-
-    try {
-      if (!userId) throw new TRPCError({ code: 'UNAUTHORIZED' });
-
-      const dbUser = await db.user.findUnique({
-        where: {
-          id: userId,
-        },
-      });
-
-      if (!dbUser) throw new TRPCError({ code: 'UNAUTHORIZED' });
-
-      const subscriptionPlan =
-        await getUserSubscriptionPlan()
-
-      if (
-        subscriptionPlan.isSubscribed &&
-        dbUser.stripeCustomerId
-      ) {
-        const stripeSession =
-          await stripe.billingPortal.sessions.create({
-            customer: dbUser.stripeCustomerId,
-            return_url: billingUrl,
-          })
-
-        return { url: stripeSession.url }
-      }
+  createStripeSession: privateProcedure
+    .input(z.object({ planName: z.enum(['Basic', 'Pro']) }))
+    .mutation(async ({ ctx, input }) => {
+      const { userId } = ctx;
+      const { planName } = input;
+      const billingUrl = absoluteUrl('/dashboard/billing');
 
       try {
-        const stripeSession =
-        await stripe.checkout.sessions.create({
-          success_url: billingUrl,
-          cancel_url: billingUrl,
-          payment_method_types: ['card'],
-          mode: 'subscription',
-          billing_address_collection: 'auto',
-          line_items: [
-            {
-              price: PLANS.find(
-                (plan) => plan.name === 'Pro'
-              )?.price.priceIds.test,
-              quantity: 1,
-            },
-          ],
-          metadata: {
-            userId: userId,
-          },
-        })
+        if (!userId) throw new TRPCError({ code: 'UNAUTHORIZED' });
 
-      return { url: stripeSession.url }
-    } catch (stripeError) {
-        console.error('Stripe API error details:', {
-          type: stripeError instanceof Error ? stripeError.constructor.name : typeof stripeError,
-          message: stripeError instanceof Error ? stripeError.message : 'Unknown error',
-          stack: stripeError instanceof Error ? stripeError.stack : undefined,
+        const dbUser = await db.user.findUnique({
+          where: {
+            id: userId,
+          },
         });
 
-        // Re-throw as TRPC error
+        if (!dbUser) throw new TRPCError({ code: 'UNAUTHORIZED' });
+
+        const subscriptionPlan = await getUserSubscriptionPlan();
+
+        if (subscriptionPlan.isSubscribed && dbUser.stripeCustomerId) {
+          const stripeSession = await stripe.billingPortal.sessions.create({
+            customer: dbUser.stripeCustomerId,
+            return_url: billingUrl,
+          });
+
+          return { url: stripeSession.url };
+        }
+
+        const selectedPlan = PLANS.find(plan => plan.name === planName);
+
+        if (!selectedPlan) {
+          console.error('Selected plan not found in PLANS configuration');
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Plan configuration not found',
+          });
+        }
+
+        const priceId = selectedPlan.price.priceIds.production;
+
+        if (!priceId) {
+          console.error(`Missing STRIPE_${planName.toUpperCase()}_PRICE_ID environment variable`);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Stripe price ID not found - check environment variables',
+          });
+        }
+
+        try {
+          const stripeSession = await stripe.checkout.sessions.create({
+            success_url: billingUrl,
+            cancel_url: billingUrl,
+            payment_method_types: ['card'],
+            mode: 'subscription',
+            billing_address_collection: 'auto',
+            line_items: [
+              {
+                price: priceId,
+                quantity: 1,
+              },
+            ],
+            metadata: {
+              userId: userId,
+              priceId: priceId,
+              planName: selectedPlan.name,
+            },
+          });
+
+          return { url: stripeSession.url };
+        } catch (stripeError) {
+          console.error('Stripe API error details:', {
+            type: stripeError instanceof Error ? stripeError.constructor.name : typeof stripeError,
+            message: stripeError instanceof Error ? stripeError.message : 'Unknown error',
+            stack: stripeError instanceof Error ? stripeError.stack : undefined,
+          });
+
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: stripeError instanceof Error ? stripeError.message : 'Stripe API call failed',
+          });
+        }
+      } catch (error) {
+        console.error('Error creating Stripe session:', error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: stripeError instanceof Error ? stripeError.message : 'Stripe API call failed',
+          message: error instanceof Error ? error.message : 'Failed to create Stripe session',
         });
       }
-    } catch (error) {
-      console.error('Error creating Stripe session:', error);
-      throw new TRPCError({
-        code: 'INTERNAL_SERVER_ERROR',
-        message: error instanceof Error ? error.message : 'Failed to create Stripe session',
-      });
-    }
-  }),
+    }),
 
   getFile: privateProcedure
     .input(z.object({ key: z.string() }))

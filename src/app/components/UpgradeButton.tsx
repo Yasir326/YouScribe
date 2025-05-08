@@ -6,7 +6,11 @@ import { trpc } from '../_trpc/client';
 import { useToast } from '@/src/hooks/use-toast';
 import { useState } from 'react';
 
-const UpgradeButton = () => {
+interface UpgradeButtonProps {
+  planName: 'Basic' | 'Pro';
+}
+
+const UpgradeButton = ({ planName }: UpgradeButtonProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -37,7 +41,7 @@ const UpgradeButton = () => {
   const handleUpgrade = async () => {
     setIsLoading(true);
     try {
-      await createStripeSession();
+      await createStripeSession({ planName });
     } catch (error) {
       console.error('Failed to start checkout:', error);
       setIsLoading(false);
@@ -58,7 +62,7 @@ const UpgradeButton = () => {
         </>
       ) : (
         <>
-          Upgrade now <ArrowRight className="h-5 w-5 ml-1.5" />
+          {planName === 'Pro' ? 'Upgrade to Pro' : 'Get Basic Plan'} <ArrowRight className="h-5 w-5 ml-1.5" />
         </>
       )}
     </Button>
