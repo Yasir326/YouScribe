@@ -47,7 +47,6 @@ export default function NavbarLoggedIn() {
       <div className="hidden md:flex justify-center space-x-6">
         <NavLink href="/how-it-works">How it Works</NavLink>
         <NavLink href="/dashboard/billing">Billing</NavLink>
-        <NavLink href="/settings">Configure Api Token</NavLink>
         {!isDashboard && <NavLink href="/dashboard">Back to Dashboard</NavLink>}
       </div>
 
@@ -80,7 +79,6 @@ export default function NavbarLoggedIn() {
           <div className="flex flex-col p-4 space-y-4">
             <MobileNavLink href="/how-it-works">How it Works</MobileNavLink>
             <MobileNavLink href="/dashboard/billing">Billing</MobileNavLink>
-            <MobileNavLink href="/settings">Configure Api Token</MobileNavLink>
             {!isDashboard && <MobileNavLink href="/dashboard">Back to Dashboard</MobileNavLink>}
             <div className="pt-2 flex flex-col space-y-3">
               <Link href="/pricing" onClick={() => setIsMenuOpen(false)}>

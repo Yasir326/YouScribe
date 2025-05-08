@@ -32,8 +32,8 @@ export const pricingItems: PricingItem[] = [
     plan: 'Basic',
     tagline: 'Perfect for getting started.',
     quota: 100,
-    price: 19.99,
-    isOneTime: true,
+    price: 7.99,
+    isOneTime: false,
     tokenUsage: {
       model: 'GPT-3.5 Turbo',
       contextWindow: 16385,
@@ -51,7 +51,6 @@ export const pricingItems: PricingItem[] = [
     features: [
       {
         text: '100 video summaries',
-        footnote: 'One-time purchase, no recurring fees',
       },
       {
         text: 'Mobile-friendly interface',
@@ -65,24 +64,24 @@ export const pricingItems: PricingItem[] = [
         negative: true,
       },
       {
-        text: 'Use your own OpenAI API key',
-        footnote: 'Bring your own API key for additional cost savings',
-      },
-      {
         text: '~6,000 tokens per summary',
         footnote: 'Including system prompt, transcript, and summary generation',
+      },
+      {
+        text: 'Extended chat responses',
+        negative: true,
       },
     ],
   },
   {
     plan: 'Pro',
     tagline: 'For power users.',
-    quota: 'unlimited',
-    price: 49.99,
-    isOneTime: true,
+    quota: 500,
+    price: 14.99,
+    isOneTime: false,
     tokenUsage: {
-      model: 'GPT-4 Turbo',
-      contextWindow: 128000,
+      model: 'GPT-4o-mini',
+      contextWindow: 16385,
       typicalUsage: {
         systemPrompt: 500,
         transcript: 8000,
@@ -96,26 +95,25 @@ export const pricingItems: PricingItem[] = [
     },
     features: [
       {
-        text: 'Unlimited video summaries',
-        footnote: 'One-time purchase, no recurring fees',
+        text: '500 video summaries',
       },
       {
         text: 'Mobile-friendly interface',
       },
       {
-        text: 'Highest quality summaries',
-        footnote: 'Powered by GPT-4 Turbo (128K context)',
+        text: 'Enhanced quality summaries',
+        footnote: 'Powered by GPT-4o-mini (16K context)',
       },
       {
         text: 'Priority support',
       },
       {
-        text: 'Use your own OpenAI API key',
-        footnote: 'Bring your own API key for additional cost savings',
-      },
-      {
         text: '~11,500 tokens per summary',
         footnote: 'Including system prompt, transcript, and summary generation',
+      },
+      {
+        text: 'Extended chat responses',
+        footnote: 'Get more detailed answers to your questions',
       },
     ],
   },

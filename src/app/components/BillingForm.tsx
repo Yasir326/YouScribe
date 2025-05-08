@@ -8,6 +8,7 @@ import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/c
 import { Button } from './ui/button';
 import { Loader2, CreditCard } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { format } from 'date-fns';
 
 interface BillingFormProps {
   subscriptionPlan: Awaited<ReturnType<typeof getUserSubscriptionPlan>>;
@@ -68,16 +69,21 @@ const BillingForm = ({ subscriptionPlan }: BillingFormProps) => {
               disabled={isPending}
             >
               {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {subscriptionPlan.isPurchased ? 'Manage Subscription' : 'Upgrade to PRO'}
+              {subscriptionPlan.isSubscribed ? 'Manage Subscription' : 'Upgrade to PRO'}
             </Button>
 
-            {subscriptionPlan.isPurchased ? (
+            {subscriptionPlan.isSubscribed && subscriptionPlan.stripeCurrentPeriodEnd ? (
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
                 className="rounded-full bg-gray-800 px-4 py-2 text-sm text-gray-300"
-              ></motion.p>
+              >
+                {subscriptionPlan.isCancelled
+                  ? 'Your plan will be canceled on '
+                  : 'Your plan renews on '}
+                {format(subscriptionPlan.stripeCurrentPeriodEnd, 'dd.MM.yyyy')}
+              </motion.p>
             ) : null}
           </CardFooter>
         </Card>

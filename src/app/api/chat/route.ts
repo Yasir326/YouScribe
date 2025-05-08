@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
 import { db } from '@/src/db';
+import { openai } from '@/src/lib/openai';
 
 // Export a dynamic config to tell Next.js this route should not be statically analyzed
 export const dynamic = 'force-dynamic';
@@ -46,37 +46,25 @@ export async function POST(req: NextRequest) {
     const userSubscription = await db.user.findUnique({
       where: { id: user.id },
       select: {
-        openaiApiKey: true,
         stripePriceId: true,
         planName: true,
       },
     });
 
-    if (!userSubscription?.openaiApiKey) {
-      console.error('OpenAI API key not configured for user');
-      return NextResponse.json(
-        {
-          error:
-            'OpenAI API key not configured. Please add your API key in the dashboard settings.',
-        },
-        { status: 400 }
-      );
+    if (!userSubscription) {
+      console.error('User subscription not found');
+      return NextResponse.json({ error: 'User subscription not found' }, { status: 400 });
     }
 
     // Select model based on user tier
     const tier = userSubscription.planName || 'Basic';
     const model = (() => {
-      if (tier === 'Pro') return 'gpt-4o';
-      if (tier === 'Plus') return 'gpt-4-turbo-preview';
+      if (tier === 'Pro') return 'gpt-4o-mini';
       return 'gpt-3.5-turbo'; // Default for Basic
     })();
 
     console.log('Using model based on tier:', { tier, model });
 
-    // Initialize OpenAI
-    const openai = new OpenAI({
-      apiKey: userSubscription.openaiApiKey,
-    });
 
     // Make OpenAI request
     console.log('Making OpenAI API request');
@@ -101,7 +89,7 @@ export async function POST(req: NextRequest) {
         },
       ],
       temperature: 0.7,
-      max_tokens: 500,
+      max_tokens: tier === 'Pro' ? 1000 : 500, // Increased token limit for Pro tier
     });
 
     // Return AI response

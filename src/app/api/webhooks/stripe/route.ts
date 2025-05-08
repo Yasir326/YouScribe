@@ -2,7 +2,6 @@ import { db } from '@/src/db';
 import { stripe } from '@/src/lib/stripe';
 import { headers } from 'next/headers';
 import type Stripe from 'stripe';
-import { PLANS } from '@/src/config/stripe';
 
 export async function POST(request: Request) {
   const body = await request.text();
@@ -30,40 +29,45 @@ export async function POST(request: Request) {
     });
   }
 
-  if (event.type === 'checkout.session.completed' || event.type === 'invoice.payment_succeeded') {
-    const customerId =
-      typeof session.customer === 'string'
-        ? session.customer
-        : session.customer?.toString() || null;
+  if (event.type === 'checkout.session.completed') {
+    const subscription =
+      await stripe.subscriptions.retrieve(
+        session.subscription as string
+      )
 
-    // Get the price ID from metadata
-    const priceId = session.metadata.priceId;
-
-    // Determine the plan name based on price ID
-    let planName = 'Basic'; // Default to Basic
-
-    // Check if this price ID matches any of our plans in the config
-    if (priceId) {
-      for (const plan of PLANS) {
-        if (plan.price.priceIds.test === priceId || plan.price.priceIds.production === priceId) {
-          planName = plan.name;
-          break;
-        }
-      }
-    }
-
-    // Reset used quota to 0 when a new plan is purchased
     await db.user.update({
       where: {
         id: session.metadata.userId,
       },
       data: {
-        stripeCustomerId: customerId,
-        stripePriceId: priceId,
-        planName: planName, // Store the plan name explicitly
-        usedQuota: 0, // Reset quota when purchasing a new plan
+        stripeSubscriptionID: subscription.id,
+        stripeCustomerId: subscription.customer as string,
+        stripePriceId: subscription.items.data[0]?.price.id,
+        stripeCurrentPeriodEnd: new Date(
+          subscription.current_period_end * 1000
+        ),
       },
-    });
+    })
+  }
+
+  if (event.type === 'invoice.payment_succeeded') {
+    // Retrieve the subscription details from Stripe.
+    const subscription =
+      await stripe.subscriptions.retrieve(
+        session.subscription as string
+      )
+
+    await db.user.update({
+      where: {
+        stripeSubscriptionID: subscription.id,
+      },
+      data: {
+        stripePriceId: subscription.items.data[0]?.price.id,
+        stripeCurrentPeriodEnd: new Date(
+          subscription.current_period_end * 1000
+        ),
+      },
+    })
   }
 
   return new Response(null, { status: 200 });

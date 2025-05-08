@@ -5,11 +5,11 @@ export const fetchCache = 'force-no-store';
 export const revalidate = 0;
 
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
 import { YoutubeTranscript } from '@/src/lib/youtube-transcript';
 import { db } from '@/src/db';
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
 import { CacheEntry } from '@/src/type';
+import { openai } from '@/src/lib/openai';
 
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const responseCache = new Map<string, CacheEntry>();
@@ -58,7 +58,6 @@ export async function POST(req: NextRequest) {
       where: { id: user.id },
       select: {
         id: true,
-        openaiApiKey: true,
         stripePriceId: true,
         planName: true,
         usedQuota: true,
@@ -75,23 +74,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!dbUser?.openaiApiKey) {
-      return NextResponse.json(
-        {
-          error:
-            'OpenAI API key not configured. Please add your API key in the dashboard settings.',
-        },
-        { status: 400 }
-      );
-    }
-
-    let openai: any;
-    try {
-      openai = new OpenAI({ apiKey: dbUser.openaiApiKey });
-    } catch (apiError) {
-      console.error('Error initializing OpenAI client:', apiError);
-      return NextResponse.json({ error: 'Invalid OpenAI API key configuration.' }, { status: 400 });
-    }
 
     const videoId = extractVideoId(url);
     if (!videoId) {
@@ -134,17 +116,21 @@ export async function POST(req: NextRequest) {
     }
 
     const tier = dbUser.planName?.includes('Pro') ? 'Pro' : 'Basic';
-    const totalQuota = tier === 'Pro' ? Infinity : 100;
+    const totalQuota = tier === 'Pro' ? 500 : 100;
 
-    if (dbUser.usedQuota >= totalQuota && totalQuota !== Infinity) {
+    if (dbUser.usedQuota >= totalQuota) {
       return NextResponse.json(
-        { error: 'You have reached your summary quota. Please upgrade your plan.' },
+        { 
+          error: tier === 'Pro' 
+            ? 'You have reached the fair usage limit. Please contact support if you need more summaries.' 
+            : 'You have reached your summary quota. Please upgrade your plan.' 
+        },
         { status: 403 }
       );
     }
 
     const now = new Date();
-    const rateLimit = tier === 'Pro' ? 60 : 10;
+    const rateLimit = tier === 'Pro' ? 30 : 10;
 
     const userRequests = await db.apiRequest.count({
       where: {
@@ -206,8 +192,7 @@ async function generateSummary(
 ): Promise<string> {
   const modelsByTier = {
     Basic: ['gpt-3.5-turbo'],
-    Plus: ['gpt-4o-mini', 'gpt-3.5-turbo'],
-    Pro: ['gpt-4-turbo', 'gpt-4', 'gpt-4-0613', 'gpt-3.5-turbo'],
+    Pro: ['gpt-4o-mini', 'gpt-3.5-turbo'],
   };
 
   const modelOptions = quickMode
@@ -215,17 +200,11 @@ async function generateSummary(
     : modelsByTier[userTier as keyof typeof modelsByTier] || ['gpt-3.5-turbo'];
 
   const modelTokenLimits = {
-    'gpt-4-turbo': 128000,
-    'gpt-4': 8192,
-    'gpt-4-0613': 8192,
     'gpt-4o-mini': 16385,
     'gpt-3.5-turbo': 16385,
   };
 
   const maxCompletionTokens = {
-    'gpt-4-turbo': 4096,
-    'gpt-4': 4096,
-    'gpt-4-0613': 4096,
     'gpt-4o-mini': 4096,
     'gpt-3.5-turbo': 4096,
   };
