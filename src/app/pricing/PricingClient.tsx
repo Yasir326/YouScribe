@@ -60,7 +60,6 @@ const PricingClient = ({ user }: PricingClientProps) => {
                 key={plan}
                 className={cn('relative rounded-2xl bg-gray-900 shadow-lg border-2', {
                   'border-purple-600 shadow-purple-500/20': plan === 'Pro',
-                  'border-blue-600 shadow-blue-500/20': plan === 'Plus',
                   'border-gray-600 shadow-white/10': plan === 'Basic',
                 })}
                 initial={{ opacity: 0, y: 20 }}
@@ -141,7 +140,7 @@ const PricingClient = ({ user }: PricingClientProps) => {
                 <div className="border-t border-gray-800" />
                 <div className="p-5">
                   {isLoggedIn ? (
-                    <UpgradeButton />
+                    <UpgradeButton planName={plan} />
                   ) : (
                     <Link
                       href="/sign-up"

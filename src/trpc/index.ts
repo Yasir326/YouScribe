@@ -5,6 +5,7 @@ import { db } from '../db';
 import { z } from 'zod';
 import { absoluteUrl } from '../lib/utils';
 import { stripe } from '../lib/stripe';
+import { getUserSubscriptionPlan } from '../lib/stripe';
 import { PLANS } from '../config/stripe';
 
 // Define the return type for authCallback
@@ -114,72 +115,49 @@ export const appRouter = router({
         where: {
           id: userId,
         },
-        select: {
-          stripePriceId: true,
-          planName: true,
-        },
       });
 
       if (!dbUser) throw new TRPCError({ code: 'UNAUTHORIZED' });
 
-      // If user has already purchased Pro, redirect to billing page
-      // They can still purchase Basic if they want to downgrade
-      if (dbUser.planName === 'Pro') {
-        return { url: billingUrl };
-      }
+      const subscriptionPlan =
+        await getUserSubscriptionPlan()
 
-      // Get the Pro plan from our configuration
-      const selectedPlan = PLANS.find(plan => plan.name === 'Pro');
+      if (
+        subscriptionPlan.isSubscribed &&
+        dbUser.stripeCustomerId
+      ) {
+        const stripeSession =
+          await stripe.billingPortal.sessions.create({
+            customer: dbUser.stripeCustomerId,
+            return_url: billingUrl,
+          })
 
-      if (!selectedPlan) {
-        console.error('Selected plan not found in PLANS configuration');
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Plan configuration not found',
-        });
-      }
-
-      const priceId = selectedPlan.price.priceIds.test;
-
-      if (!priceId) {
-        console.error('Missing STRIPE_PRO_PRICE_ID environment variable');
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Stripe price ID not found - check environment variables',
-        });
-      }
-
-      // Ensure price ID is in correct format (price_XXXXXXX)
-      if (!priceId.startsWith('price_')) {
-        console.error('Invalid price ID format:', priceId);
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Invalid Stripe price ID format',
-        });
+        return { url: stripeSession.url }
       }
 
       try {
-        const stripeSession = await stripe.checkout.sessions.create({
+        const stripeSession =
+        await stripe.checkout.sessions.create({
           success_url: billingUrl,
           cancel_url: billingUrl,
           payment_method_types: ['card'],
-          mode: 'payment', // One-time payment
+          mode: 'subscription',
           billing_address_collection: 'auto',
           line_items: [
             {
-              price: priceId,
+              price: PLANS.find(
+                (plan) => plan.name === 'Pro'
+              )?.price.priceIds.test,
               quantity: 1,
             },
           ],
           metadata: {
             userId: userId,
-            priceId: priceId,
-            planName: selectedPlan.name, // Include the plan name in metadata
           },
-        });
+        })
 
-        return { url: stripeSession.url };
-      } catch (stripeError) {
+      return { url: stripeSession.url }
+    } catch (stripeError) {
         console.error('Stripe API error details:', {
           type: stripeError instanceof Error ? stripeError.constructor.name : typeof stripeError,
           message: stripeError instanceof Error ? stripeError.message : 'Unknown error',

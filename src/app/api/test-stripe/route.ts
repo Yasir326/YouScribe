@@ -11,7 +11,7 @@ export async function GET() {
     }
 
     // Get price ID
-    const priceId = selectedPlan.price.priceIds.test;
+    const priceId = selectedPlan.price.priceIds.production;
     if (!priceId) {
       return NextResponse.json(
         { error: 'Price ID not found in environment variables' },
@@ -25,7 +25,7 @@ export async function GET() {
         success_url: 'http://localhost:3000/dashboard/billing',
         cancel_url: 'http://localhost:3000/dashboard/billing',
         payment_method_types: ['card'],
-        mode: 'payment',
+        mode: 'subscription',
         line_items: [
           {
             price: priceId,

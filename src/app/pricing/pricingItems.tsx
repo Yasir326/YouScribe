@@ -5,7 +5,7 @@ export type Feature = {
 };
 
 type PricingItem = {
-  plan: string;
+  plan: 'Basic' | 'Pro';
   tagline: string;
   quota: number | 'unlimited';
   price: number;
