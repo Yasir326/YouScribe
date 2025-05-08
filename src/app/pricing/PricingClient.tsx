@@ -140,7 +140,7 @@ const PricingClient = ({ user }: PricingClientProps) => {
                 <div className="border-t border-gray-800" />
                 <div className="p-5">
                   {isLoggedIn ? (
-                    <UpgradeButton planName={plan} />
+                    <UpgradeButton />
                   ) : (
                     <Link
                       href="/sign-up"
