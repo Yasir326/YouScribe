@@ -30,6 +30,12 @@ const BillingForm = ({ subscriptionPlan }: BillingFormProps) => {
     },
   });
 
+  const handleUpgrade = () => {
+    // If user is on Basic plan, upgrade to Pro, otherwise stay on current plan
+    const planName = subscriptionPlan.name === 'Basic' ? 'Pro' : 'Pro' as const;
+    createStripeSession({ planName });
+  };
+
   return (
     <MaxWidthWrapper className="max-w-5xl">
       <motion.form
@@ -39,7 +45,7 @@ const BillingForm = ({ subscriptionPlan }: BillingFormProps) => {
         className="mt-12"
         onSubmit={e => {
           e.preventDefault();
-          createStripeSession();
+          handleUpgrade();
         }}
       >
         <Card className="bg-gray-900 border-2 border-gray-800">
