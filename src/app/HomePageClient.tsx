@@ -142,9 +142,10 @@ export default function HomePageClient({ user, suppressHydrationWarning }: HomeP
                 <div className="relative aspect-video rounded-lg overflow-hidden shadow-2xl">
                   <iframe
                     className="absolute top-0 left-0 w-full h-full"
-                    src="https://www.youtube.com/embed/Hhv3xAGkMfc"
+                    src="https://www.youtube-nocookie.com/embed/Hhv3xAGkMfc?si=ZddLt5qvsWOWFe3O"
                     title="YouLearnNow Demo"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
                     allowFullScreen
                   />
                 </div>
